@@ -1,5 +1,21 @@
 # React + TypeScript + Vite
 
+## Apollo Setup
+
+1. Create a local env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Set your GraphQL endpoint:
+
+```bash
+VITE_GRAPHQL_API_URL=https://graphqlzero.almansi.me/api
+```
+
+3. Apollo Provider is already wired in `src/main.tsx` through `src/providers/AppProviders.tsx`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
