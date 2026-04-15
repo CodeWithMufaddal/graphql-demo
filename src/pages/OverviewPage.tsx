@@ -1,0 +1,123 @@
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { activityFeed, campaigns, metrics } from "@/features/dashboard/mock-data"
+import { statusVariant } from "@/features/dashboard/ui-utils"
+
+export function OverviewPage() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Card className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-accent/25" />
+        <CardHeader className="relative border-b">
+          <CardTitle>Admin Control Center</CardTitle>
+          <CardDescription>
+            Strong UI architecture with static data. Replace these sections with GraphQL queries.
+          </CardDescription>
+          <CardAction>
+            <Badge variant="secondary">UI-only mode</Badge>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="relative flex items-center justify-between py-4">
+          <p className="text-sm text-muted-foreground">
+            Keep learning-focused flow: wire one widget at a time using your Apollo hooks.
+          </p>
+          <Button variant="outline" className="hidden sm:inline-flex">
+            Export Snapshot
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <Card key={metric.title}>
+            <CardHeader className="border-b">
+              <CardDescription>{metric.title}</CardDescription>
+              <CardTitle className="text-2xl">{metric.value}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 py-4">
+              <div className="flex items-center gap-2">
+                <Badge variant={metric.positive ? "secondary" : "destructive"}>
+                  {metric.delta}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{metric.subtitle}</span>
+              </div>
+              <Progress value={metric.progress} />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Campaign Performance</CardTitle>
+            <CardDescription>Ready for list query + pagination</CardDescription>
+          </CardHeader>
+          <CardContent className="py-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Campaign</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Spend</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaigns.map((campaign) => (
+                  <TableRow key={campaign.name}>
+                    <TableCell className="font-medium">{campaign.name}</TableCell>
+                    <TableCell>{campaign.owner}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant(campaign.status)}>{campaign.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{campaign.spend}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Live Activity</CardTitle>
+            <CardDescription>Feed UI for subscriptions later</CardDescription>
+          </CardHeader>
+          <CardContent className="py-4">
+            <ScrollArea className="h-[260px] pr-3">
+              <div className="flex flex-col gap-3">
+                {activityFeed.map((item) => (
+                  <div key={`${item.actor}-${item.time}`} className="rounded-lg border bg-background/80 p-3">
+                    <p className="text-sm">
+                      <span className="font-medium">{item.actor}</span> {item.action}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{item.time}</p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
