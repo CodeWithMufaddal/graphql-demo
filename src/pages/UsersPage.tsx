@@ -1,20 +1,14 @@
 import { useMemo } from "react"
-import { MoreHorizontalIcon, PlusIcon, TablePropertiesIcon, UsersRoundIcon } from "lucide-react"
+import { MoreHorizontalIcon, TablePropertiesIcon, UsersRoundIcon } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
+import { MetricCard } from "@/components/dashboard/metric-card"
 import { ServerDataTable } from "@/components/data-table/server-data-table"
 import { UsersTableToolbar } from "@/components/data-table/users-table-toolbar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useUsersTable } from "@/features/users/hooks/useUsersTable"
 import { type UsersTableRow } from "@/features/users/table/users-table-server"
 import { statusVariant } from "@/features/dashboard/ui-utils"
@@ -146,45 +140,16 @@ export function UsersPage() {
   return (
     <div className="grid min-w-0 gap-4">
       <div className="grid min-w-0 gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="border-b">
-            <CardDescription>Total records</CardDescription>
-            <CardTitle>{totalCount}</CardTitle>
-            <CardAction>
-              <UsersRoundIcon className="text-muted-foreground" />
-            </CardAction>
-          </CardHeader>
-          <CardContent className="py-4 text-sm text-muted-foreground">
-            Server-side pagination enabled
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="border-b">
-            <CardDescription>Selected rows</CardDescription>
-            <CardTitle>{selectedCount}</CardTitle>
-            <CardAction>
-              <TablePropertiesIcon className="text-muted-foreground" />
-            </CardAction>
-          </CardHeader>
-          <CardContent className="py-4 text-sm text-muted-foreground">
-            Persisted across interactions
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="border-b">
-            <CardDescription>Server controls</CardDescription>
-            <CardTitle>Search + Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center gap-2 py-4">
-            <Button size="sm">
-              <PlusIcon data-icon="inline-start" />
-              Invite User
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setColumnSizing({})}>
-              Reset Widths
-            </Button>
-          </CardContent>
-        </Card>
+        <MetricCard
+          label="Total records"
+          value={totalCount}
+          icon={<UsersRoundIcon className="text-muted-foreground" />}
+        />
+        <MetricCard
+          label="Selected rows"
+          value={selectedCount}
+          icon={<TablePropertiesIcon className="text-muted-foreground" />}
+        />
       </div>
 
       <UsersTableToolbar

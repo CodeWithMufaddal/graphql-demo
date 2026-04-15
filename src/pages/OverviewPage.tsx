@@ -1,15 +1,10 @@
 import { Link } from "react-router-dom"
 import { DatabaseZapIcon, FileCode2Icon } from "lucide-react"
 
+import { DashboardSectionCard } from "@/components/dashboard/dashboard-section-card"
+import { MetricCard } from "@/components/dashboard/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -28,31 +23,30 @@ export function OverviewPage() {
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
-          <Card key={metric.title}>
-            <CardHeader className="border-b">
-              <CardDescription>{metric.title}</CardDescription>
-              <CardTitle className="text-2xl">{metric.value}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2 py-4">
-              <div className="flex items-center gap-2">
-                <Badge variant={metric.positive ? "secondary" : "destructive"}>
-                  {metric.delta}
-                </Badge>
-                <span className="text-xs text-muted-foreground">{metric.subtitle}</span>
+          <MetricCard
+            key={metric.title}
+            label={metric.title}
+            value={metric.value}
+            footer={
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant={metric.positive ? "secondary" : "destructive"}>
+                    {metric.delta}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{metric.subtitle}</span>
+                </div>
+                <Progress value={metric.progress} />
               </div>
-              <Progress value={metric.progress} />
-            </CardContent>
-          </Card>
+            }
+          />
         ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Campaign Performance</CardTitle>
-            <CardDescription>Ready for list query + pagination</CardDescription>
-          </CardHeader>
-          <CardContent className="py-4">
+        <DashboardSectionCard
+          title="Campaign Performance"
+          description="Ready for list query + pagination"
+        >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -75,15 +69,9 @@ export function OverviewPage() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </DashboardSectionCard>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Live Activity</CardTitle>
-            <CardDescription>Feed UI for subscriptions later</CardDescription>
-          </CardHeader>
-          <CardContent className="py-4">
+        <DashboardSectionCard title="Live Activity" description="Feed UI for subscriptions later">
             <ScrollArea className="h-[260px] pr-3">
               <div className="flex flex-col gap-3">
                 {activityFeed.map((item) => (
@@ -96,39 +84,36 @@ export function OverviewPage() {
                 ))}
               </div>
             </ScrollArea>
-          </CardContent>
-        </Card>
+        </DashboardSectionCard>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
+        <DashboardSectionCard
+          title={
+            <span className="flex items-center gap-2">
               <DatabaseZapIcon className="size-5" />
               Query Studio
-            </CardTitle>
-            <CardDescription>All GraphQLZero fetch operations prepared</CardDescription>
-          </CardHeader>
-          <CardContent className="py-4">
+            </span>
+          }
+          description="All GraphQLZero fetch operations prepared"
+        >
             <Button asChild>
               <Link to="/query-studio">Open Query Studio</Link>
             </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
+        </DashboardSectionCard>
+        <DashboardSectionCard
+          title={
+            <span className="flex items-center gap-2">
               <FileCode2Icon className="size-5" />
               Mutation Studio
-            </CardTitle>
-            <CardDescription>Create, update, and delete operation templates</CardDescription>
-          </CardHeader>
-          <CardContent className="py-4">
+            </span>
+          }
+          description="Create, update, and delete operation templates"
+        >
             <Button asChild variant="outline">
               <Link to="/mutation-studio">Open Mutation Studio</Link>
             </Button>
-          </CardContent>
-        </Card>
+        </DashboardSectionCard>
       </div>
     </div>
   )
