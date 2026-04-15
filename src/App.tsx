@@ -12,6 +12,7 @@ const loadSystemModule = () => import("@/modules/system")
 const loadDashboardModule = () => import("@/modules/dashboard")
 const loadSettingsModule = () => import("@/modules/settings")
 const loadUsersModule = () => import("@/modules/users")
+const loadPostsModule = () => import("@/modules/posts")
 
 const AdminLayout = lazy(() =>
   loadAdminLayoutModule().then((module) => ({ default: module.AdminLayout }))
@@ -55,6 +56,9 @@ const UsersPage = lazy(() =>
 const UserEditorPage = lazy(() =>
   loadUsersModule().then((module) => ({ default: module.UserEditorPage }))
 )
+const PostsPage = lazy(() =>
+  loadPostsModule().then((module) => ({ default: module.PostsPage }))
+)
 
 function preloadCurrentRouteModules(pathname: string) {
   if (pathname === "/login") {
@@ -71,6 +75,11 @@ function preloadCurrentRouteModules(pathname: string) {
 
   if (pathname.startsWith("/users")) {
     void loadUsersModule()
+    return
+  }
+
+  if (pathname.startsWith("/posts")) {
+    void loadPostsModule()
     return
   }
 
@@ -199,6 +208,7 @@ function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/new" element={<UserEditorPage />} />
             <Route path="/users/:id/edit" element={<UserEditorPage />} />
+            <Route path="/posts" element={<PostsPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/query-studio" element={<QueryStudioPage />} />

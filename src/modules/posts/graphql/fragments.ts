@@ -6,10 +6,22 @@ export const POSTS_PAGE_ENVELOPE_FIELDS_FRAGMENT = gql`
       totalCount
     }
     links {
-      first
-      prev
-      next
-      last
+      first {
+        page
+        limit
+      }
+      prev {
+        page
+        limit
+      }
+      next {
+        page
+        limit
+      }
+      last {
+        page
+        limit
+      }
     }
   }
 `

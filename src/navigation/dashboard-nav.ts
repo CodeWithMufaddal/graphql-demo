@@ -3,6 +3,7 @@ import {
   CircleDollarSignIcon,
   DatabaseZapIcon,
   FileCode2Icon,
+  FileTextIcon,
   LayoutDashboardIcon,
   Settings2Icon,
   ShieldCheckIcon,
@@ -32,6 +33,13 @@ export const dashboardNavItems: DashboardNavItem[] = [
     description: "People directory, roles, and onboarding",
     icon: UsersRoundIcon,
     badge: "24",
+    group: "workspace",
+  },
+  {
+    path: "/posts",
+    title: "Posts",
+    description: "Content listing with author and pagination insights",
+    icon: FileTextIcon,
     group: "workspace",
   },
   {
