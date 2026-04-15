@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -33,7 +32,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -57,12 +55,11 @@ import {
 } from "@/components/ui/sidebar"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/providers/AuthProvider"
-import { type ThemeMode, useTheme } from "@/providers/ThemeProvider"
+import { useTheme } from "@/providers/ThemeProvider"
 import {
   graphqlNavItems,
   managementNavItems,
   resolveNavItem,
-  routeHighlights,
   workspaceNavItems,
 } from "@/navigation/dashboard-nav"
 
@@ -99,25 +96,13 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { logout, user } = useAuth()
-  const { mode, setMode, preset } = useTheme()
+  const { setMode } = useTheme()
   const [sheetOpen, setSheetOpen] = useState(false)
   const currentNav = useMemo(() => resolveNavItem(pathname), [pathname])
 
   function handleLogout() {
     logout()
     navigate("/login", { replace: true })
-  }
-
-  function renderModeIcon(modeValue: ThemeMode) {
-    if (modeValue === "light") {
-      return <SunIcon />
-    }
-
-    if (modeValue === "dark") {
-      return <MoonStarIcon />
-    }
-
-    return <MonitorCogIcon />
   }
 
   return (
@@ -150,7 +135,9 @@ export function AdminLayout() {
                 <SparklesIcon className="size-4" />
                 GraphQL Learning Mode
               </div>
-              <Progress value={68} />
+              <div className="h-1.5 rounded-full bg-sidebar-border">
+                <div className="h-full w-[68%] rounded-full bg-sidebar-primary" />
+              </div>
             </div>
           </SidebarGroup>
         </SidebarContent>
@@ -271,32 +258,6 @@ export function AdminLayout() {
           </header>
 
           <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-x-hidden p-4 md:p-6">
-            <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
-              <div className="rounded-xl border bg-card/80 p-4">
-                <h1 className="text-balance">{currentNav.title}</h1>
-                <p className="text-sm text-muted-foreground">{currentNav.description}</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                {routeHighlights.map((item) => (
-                  <div key={item.title} className="rounded-xl border bg-card/80 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      <item.icon className="size-4" />
-                      {item.title}
-                    </div>
-                    <p className="text-2xl font-semibold">{item.value}</p>
-                  </div>
-                ))}
-                <div className="rounded-xl border bg-card/80 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="secondary">Route: {currentNav.path}</Badge>
-                    <Badge variant="outline" className="capitalize">
-                      {renderModeIcon(mode)}
-                      {mode} / {preset}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
             <Outlet />
           </main>
 

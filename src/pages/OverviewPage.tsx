@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -27,27 +26,6 @@ import { statusVariant } from "@/features/dashboard/ui-utils"
 export function OverviewPage() {
   return (
     <div className="flex flex-col gap-4">
-      <Card className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-accent/25" />
-        <CardHeader className="relative border-b">
-          <CardTitle>Admin Control Center</CardTitle>
-          <CardDescription>
-            Strong UI architecture with static data. Replace these sections with GraphQL queries.
-          </CardDescription>
-          <CardAction>
-            <Badge variant="secondary">UI-only mode</Badge>
-          </CardAction>
-        </CardHeader>
-        <CardContent className="relative flex items-center justify-between py-4">
-          <p className="text-sm text-muted-foreground">
-            Keep learning-focused flow: wire one widget at a time using your Apollo hooks.
-          </p>
-          <Button variant="outline" className="hidden sm:inline-flex">
-            Export Snapshot
-          </Button>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <Card key={metric.title}>
