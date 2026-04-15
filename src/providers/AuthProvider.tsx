@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react"
+import { create } from "zustand"
 
 type AuthUser = {
   name: string
@@ -17,7 +10,7 @@ type LoginPayload = {
   password: string
 }
 
-type AuthContextValue = {
+type AuthState = {
   user: AuthUser | null
   isAuthenticated: boolean
   login: (payload: LoginPayload) => Promise<void>
@@ -26,24 +19,43 @@ type AuthContextValue = {
 
 const AUTH_STORAGE_KEY = "dashboard.auth.user"
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+function readPersistedUser(): AuthUser | null {
+  if (typeof window === "undefined") {
+    return null
+  }
 
-export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const persisted = localStorage.getItem(AUTH_STORAGE_KEY)
+  const persisted = localStorage.getItem(AUTH_STORAGE_KEY)
 
-    if (!persisted) {
-      return null
-    }
+  if (!persisted) {
+    return null
+  }
 
-    try {
-      return JSON.parse(persisted) as AuthUser
-    } catch {
-      return null
-    }
-  })
+  try {
+    return JSON.parse(persisted) as AuthUser
+  } catch {
+    return null
+  }
+}
 
-  const login = useCallback(async ({ email, password }: LoginPayload) => {
+function persistUser(user: AuthUser | null) {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  if (!user) {
+    localStorage.removeItem(AUTH_STORAGE_KEY)
+    return
+  }
+
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+}
+
+const initialUser = readPersistedUser()
+
+export const useAuth = create<AuthState>((set) => ({
+  user: initialUser,
+  isAuthenticated: Boolean(initialUser),
+  login: async ({ email, password }) => {
     if (!email || !password) {
       throw new Error("Email and password are required.")
     }
@@ -57,34 +69,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
       email,
     }
 
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(resolvedUser))
-    setUser(resolvedUser)
-  }, [])
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    setUser(null)
-  }, [])
-
-  const value = useMemo(
-    () => ({
-      user,
-      isAuthenticated: Boolean(user),
-      login,
-      logout,
-    }),
-    [user, login, logout]
-  )
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider")
-  }
-
-  return context
-}
+    persistUser(resolvedUser)
+    set({
+      user: resolvedUser,
+      isAuthenticated: true,
+    })
+  },
+  logout: () => {
+    persistUser(null)
+    set({
+      user: null,
+      isAuthenticated: false,
+    })
+  },
+}))

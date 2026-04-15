@@ -11,4 +11,33 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 450,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          minSize: 12000,
+          groups: [
+            {
+              name: "react-core",
+              test: /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//,
+            },
+            {
+              name: "apollo-graphql",
+              test: /node_modules\/(@apollo|graphql|graphql-tag|optimism)\//,
+            },
+            {
+              name: "ui-kit",
+              test: /node_modules\/(radix-ui|lucide-react|class-variance-authority|clsx|tailwind-merge|tw-animate-css|@fontsource-variable)\//,
+            },
+            {
+              name: "vendor",
+              test: /node_modules\//,
+            },
+          ],
+        },
+      },
+    },
+  },
 })

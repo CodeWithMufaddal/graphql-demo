@@ -1,17 +1,9 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react"
+import { create } from "zustand"
 
 export type ThemeMode = "light" | "dark" | "system"
 export type ThemePreset = "aurora" | "ocean" | "graphite"
 
-type ThemeContextValue = {
+type ThemeState = {
   mode: ThemeMode
   preset: ThemePreset
   setMode: (mode: ThemeMode) => void
@@ -21,7 +13,26 @@ type ThemeContextValue = {
 const THEME_MODE_KEY = "dashboard.theme.mode"
 const THEME_PRESET_KEY = "dashboard.theme.preset"
 
-const ThemeContext = createContext<ThemeContextValue | null>(null)
+const validModes: ThemeMode[] = ["light", "dark", "system"]
+const validPresets: ThemePreset[] = ["aurora", "ocean", "graphite"]
+
+function readThemeMode(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "system"
+  }
+
+  const saved = localStorage.getItem(THEME_MODE_KEY)
+  return validModes.includes(saved as ThemeMode) ? (saved as ThemeMode) : "system"
+}
+
+function readThemePreset(): ThemePreset {
+  if (typeof window === "undefined") {
+    return "aurora"
+  }
+
+  const saved = localStorage.getItem(THEME_PRESET_KEY)
+  return validPresets.includes(saved as ThemePreset) ? (saved as ThemePreset) : "aurora"
+}
 
 function resolveSystemMode() {
   if (typeof window === "undefined") {
@@ -32,6 +43,10 @@ function resolveSystemMode() {
 }
 
 function applyTheme(mode: ThemeMode, preset: ThemePreset) {
+  if (typeof window === "undefined") {
+    return
+  }
+
   const root = document.documentElement
   const resolvedMode = mode === "system" ? resolveSystemMode() : mode
 
@@ -39,62 +54,47 @@ function applyTheme(mode: ThemeMode, preset: ThemePreset) {
   root.dataset.theme = preset
 }
 
-export function ThemeProvider({ children }: PropsWithChildren) {
-  const [mode, setModeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem(THEME_MODE_KEY) as ThemeMode | null
-    return saved ?? "system"
-  })
-  const [preset, setPresetState] = useState<ThemePreset>(() => {
-    const saved = localStorage.getItem(THEME_PRESET_KEY) as ThemePreset | null
-    return saved ?? "aurora"
-  })
+const initialMode = readThemeMode()
+const initialPreset = readThemePreset()
 
-  useEffect(() => {
-    applyTheme(mode, preset)
-    localStorage.setItem(THEME_MODE_KEY, mode)
-    localStorage.setItem(THEME_PRESET_KEY, preset)
-  }, [mode, preset])
+export const useTheme = create<ThemeState>((set, get) => ({
+  mode: initialMode,
+  preset: initialPreset,
+  setMode: (mode) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(THEME_MODE_KEY, mode)
+    }
 
-  useEffect(() => {
+    set({ mode })
+    applyTheme(mode, get().preset)
+  },
+  setPreset: (preset) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(THEME_PRESET_KEY, preset)
+    }
+
+    set({ preset })
+    applyTheme(get().mode, preset)
+  },
+}))
+
+declare global {
+  interface Window {
+    __dashboardThemeListenerAttached?: boolean
+  }
+}
+
+if (typeof window !== "undefined") {
+  applyTheme(initialMode, initialPreset)
+
+  if (!window.__dashboardThemeListenerAttached) {
     const media = window.matchMedia("(prefers-color-scheme: dark)")
-
-    const handleChange = () => {
+    media.addEventListener("change", () => {
+      const { mode, preset } = useTheme.getState()
       if (mode === "system") {
         applyTheme(mode, preset)
       }
-    }
-
-    media.addEventListener("change", handleChange)
-    return () => media.removeEventListener("change", handleChange)
-  }, [mode, preset])
-
-  const setMode = useCallback((nextMode: ThemeMode) => {
-    setModeState(nextMode)
-  }, [])
-
-  const setPreset = useCallback((nextPreset: ThemePreset) => {
-    setPresetState(nextPreset)
-  }, [])
-
-  const value = useMemo(
-    () => ({
-      mode,
-      preset,
-      setMode,
-      setPreset,
-    }),
-    [mode, preset, setMode, setPreset]
-  )
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext)
-
-  if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider")
+    })
+    window.__dashboardThemeListenerAttached = true
   }
-
-  return context
 }

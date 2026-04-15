@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useState, type SubmitEvent } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { LockKeyholeIcon, LogInIcon, SparklesIcon } from "lucide-react"
 
@@ -18,7 +18,7 @@ export function LoginPage() {
 
   const destination = (location.state as { from?: string } | null)?.from ?? "/overview"
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)

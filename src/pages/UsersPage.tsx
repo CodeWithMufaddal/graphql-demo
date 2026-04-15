@@ -24,6 +24,7 @@ import { users } from "@/features/dashboard/mock-data"
 import { statusVariant } from "@/features/dashboard/ui-utils"
 
 export function UsersPage() {
+  
   return (
     <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
       <div className="flex flex-col gap-4">
