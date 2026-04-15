@@ -1,5 +1,13 @@
 import type { PropsWithChildren } from 'react'
+import { ApolloProvider } from '@apollo/client/react'
+
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { apolloClient } from '@/lib/apollo/client'
 
 export function AppProviders({ children }: PropsWithChildren) {
-  return children
+  return (
+    <ApolloProvider client={apolloClient}>
+      <TooltipProvider>{children}</TooltipProvider>
+    </ApolloProvider>
+  )
 }

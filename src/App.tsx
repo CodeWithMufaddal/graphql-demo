@@ -4,48 +4,97 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 import { resolveNavItem } from "@/navigation/dashboard-nav"
 import { RequireAuth } from "@/routes/RequireAuth"
 
+const loadAdminLayoutModule = () => import("@/layouts/AdminLayout")
+const loadBillingModule = () => import("@/modules/billing")
+const loadAuthModule = () => import("@/modules/auth")
+const loadStudioModule = () => import("@/modules/studio")
+const loadSystemModule = () => import("@/modules/system")
+const loadDashboardModule = () => import("@/modules/dashboard")
+const loadSettingsModule = () => import("@/modules/settings")
+const loadUsersModule = () => import("@/modules/users")
+
 const AdminLayout = lazy(() =>
-  import("@/layouts/AdminLayout").then((module) => ({ default: module.AdminLayout }))
+  loadAdminLayoutModule().then((module) => ({ default: module.AdminLayout }))
 )
 const BillingPage = lazy(() =>
-  import("@/modules/billing").then((module) => ({
+  loadBillingModule().then((module) => ({
     default: module.BillingPage,
   }))
 )
 const LoginPage = lazy(() =>
-  import("@/modules/auth").then((module) => ({ default: module.LoginPage }))
+  loadAuthModule().then((module) => ({ default: module.LoginPage }))
 )
 const MutationStudioPage = lazy(() =>
-  import("@/modules/studio").then((module) => ({
+  loadStudioModule().then((module) => ({
     default: module.MutationStudioPage,
   }))
 )
 const NotFoundPage = lazy(() =>
-  import("@/modules/system").then((module) => ({
+  loadSystemModule().then((module) => ({
     default: module.NotFoundPage,
   }))
 )
 const OverviewPage = lazy(() =>
-  import("@/modules/dashboard").then((module) => ({
+  loadDashboardModule().then((module) => ({
     default: module.OverviewPage,
   }))
 )
 const QueryStudioPage = lazy(() =>
-  import("@/modules/studio").then((module) => ({
+  loadStudioModule().then((module) => ({
     default: module.QueryStudioPage,
   }))
 )
 const SettingsPage = lazy(() =>
-  import("@/modules/settings").then((module) => ({
+  loadSettingsModule().then((module) => ({
     default: module.SettingsPage,
   }))
 )
 const UsersPage = lazy(() =>
-  import("@/modules/users").then((module) => ({ default: module.UsersPage }))
+  loadUsersModule().then((module) => ({ default: module.UsersPage }))
 )
 const UserEditorPage = lazy(() =>
-  import("@/modules/users").then((module) => ({ default: module.UserEditorPage }))
+  loadUsersModule().then((module) => ({ default: module.UserEditorPage }))
 )
+
+function preloadCurrentRouteModules(pathname: string) {
+  if (pathname === "/login") {
+    void loadAuthModule()
+    return
+  }
+
+  void loadAdminLayoutModule()
+
+  if (pathname === "/" || pathname === "/overview") {
+    void loadDashboardModule()
+    return
+  }
+
+  if (pathname.startsWith("/users")) {
+    void loadUsersModule()
+    return
+  }
+
+  if (pathname === "/billing") {
+    void loadBillingModule()
+    return
+  }
+
+  if (pathname === "/settings") {
+    void loadSettingsModule()
+    return
+  }
+
+  if (pathname === "/query-studio" || pathname === "/mutation-studio") {
+    void loadStudioModule()
+    return
+  }
+
+  void loadSystemModule()
+}
+
+if (typeof window !== "undefined") {
+  preloadCurrentRouteModules(window.location.pathname)
+}
 
 function RouteLoader() {
   return (
