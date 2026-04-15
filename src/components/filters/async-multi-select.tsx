@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type UIEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type UIEvent } from "react"
 import { CheckIcon, ChevronsUpDownIcon, LoaderCircleIcon, XIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -27,19 +27,26 @@ type AsyncMultiSelectProps = {
   label: string
   placeholder?: string
   selected: string[]
+  selectedLabelMap?: Record<string, string>
   pageSize?: number
   loadOptions: (request: AsyncSelectRequest) => Promise<AsyncSelectResponse>
   onChange: (nextSelected: string[]) => void
   className?: string
 }
 
-function summarizeSelection(label: string, selected: string[]) {
+function summarizeSelection(
+  label: string,
+  selected: string[],
+  selectedLabelMap: Record<string, string>
+) {
+  const selectedLabels = selected.map((value) => selectedLabelMap[value] ?? value)
+
   if (selected.length === 0) {
     return label
   }
 
   if (selected.length <= 2) {
-    return `${label}: ${selected.join(", ")}`
+    return `${label}: ${selectedLabels.join(", ")}`
   }
 
   return `${label}: ${selected.length} selected`
@@ -49,18 +56,25 @@ export function AsyncMultiSelect({
   label,
   placeholder = "Search options...",
   selected,
+  selectedLabelMap,
   pageSize = 20,
   loadOptions,
   onChange,
   className,
 }: AsyncMultiSelectProps) {
+  const loadOptionsRef = useRef(loadOptions)
   const [open, setOpen] = useState(false)
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [options, setOptions] = useState<AsyncSelectOption[]>([])
+  const [knownOptionsMap, setKnownOptionsMap] = useState<Record<string, string>>({})
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    loadOptionsRef.current = loadOptions
+  }, [loadOptions])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -72,17 +86,31 @@ export function AsyncMultiSelect({
   }, [searchInput])
 
   const selectedSet = useMemo(() => new Set(selected), [selected])
+  const mergedLabelMap = useMemo(
+    () => ({
+      ...knownOptionsMap,
+      ...selectedLabelMap,
+    }),
+    [knownOptionsMap, selectedLabelMap]
+  )
 
   const fetchPage = useCallback(
     async (nextPage: number, append: boolean) => {
       setIsLoading(true)
       try {
-        const response = await loadOptions({
+        const response = await loadOptionsRef.current({
           search,
           page: nextPage,
           pageSize,
         })
 
+        setKnownOptionsMap((previous) => {
+          const next = { ...previous }
+          for (const option of response.options) {
+            next[option.value] = option.label
+          }
+          return next
+        })
         setHasMore(response.hasMore)
         setPage(nextPage)
         setOptions((previous) => {
@@ -94,7 +122,7 @@ export function AsyncMultiSelect({
         setIsLoading(false)
       }
     },
-    [loadOptions, pageSize, search]
+    [pageSize, search]
   )
 
   useEffect(() => {
@@ -138,7 +166,9 @@ export function AsyncMultiSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className={cn("justify-between", className)}>
-          <span className="truncate">{summarizeSelection(label, selected)}</span>
+          <span className="truncate">
+            {summarizeSelection(label, selected, mergedLabelMap)}
+          </span>
           <ChevronsUpDownIcon className="text-muted-foreground" />
         </Button>
       </PopoverTrigger>
@@ -189,7 +219,7 @@ export function AsyncMultiSelect({
           <div className="flex flex-wrap items-center gap-2">
             {selected.map((item) => (
               <Badge key={item} variant="secondary" className="gap-1">
-                {item}
+                {mergedLabelMap[item] ?? item}
                 <button type="button" onClick={() => toggleValue(item)}>
                   <XIcon className="size-3" />
                 </button>

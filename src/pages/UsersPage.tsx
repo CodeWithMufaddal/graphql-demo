@@ -1,19 +1,48 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { MoreHorizontalIcon, TablePropertiesIcon, UsersRoundIcon } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { ServerDataTable } from "@/components/data-table/server-data-table"
-import { UsersTableToolbar } from "@/components/data-table/users-table-toolbar"
+import {
+  TableToolbar,
+  type TableToolbarField,
+} from "@/components/data-table/table-toolbar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useUsersTable } from "@/features/users/hooks/useUsersTable"
-import { type UsersTableRow } from "@/features/users/table/users-table-server"
+import { useDataTable } from "@/hooks/use-data-table"
+import {
+  fetchFilterOptions,
+  fetchUsersTable,
+  type FilterOptionsRequest,
+  type UsersServerFilters,
+  type UsersTableRow,
+} from "@/features/users/table/users-table-server"
 import { statusVariant } from "@/features/dashboard/ui-utils"
 
+const defaultFilters: UsersServerFilters = {
+  roles: [],
+  statuses: [],
+  companies: [],
+  createdFrom: "",
+  createdTo: "",
+}
+
 export function UsersPage() {
+  const loadRoles = useCallback((request: FilterOptionsRequest) => {
+    return fetchFilterOptions("roles", request)
+  }, [])
+
+  const loadStatuses = useCallback((request: FilterOptionsRequest) => {
+    return fetchFilterOptions("statuses", request)
+  }, [])
+
+  const loadCompanies = useCallback((request: FilterOptionsRequest) => {
+    return fetchFilterOptions("companies", request)
+  }, [])
+
   const {
     rows,
     totalCount,
@@ -35,44 +64,94 @@ export function UsersPage() {
     filters,
     setFilters,
     resetFilters,
-    loadFilterOptions,
-  } = useUsersTable()
+  } = useDataTable<UsersTableRow, UsersServerFilters>({
+    fetchData: fetchUsersTable,
+    defaultFilters,
+    initialSorting: [
+      {
+        id: "createdAt",
+        desc: true,
+      },
+    ],
+    initialColumnPinning: {
+      left: ["select", "name"],
+      right: ["actions"],
+    },
+    loadingErrorMessage: "Unable to load users table data.",
+  })
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length
+
+  const fields = useMemo<TableToolbarField<UsersServerFilters>[]>(
+    () => [
+      {
+        type: "asyncSelect",
+        name: "roles",
+        label: "Roles",
+        loadOptions: loadRoles,
+        className: "h-9 min-w-[8.25rem] px-2",
+      },
+      {
+        type: "asyncSelect",
+        name: "statuses",
+        label: "Statuses",
+        loadOptions: loadStatuses,
+        className: "h-9 min-w-[8.75rem] px-2",
+      },
+      {
+        type: "asyncSelect",
+        name: "companies",
+        label: "Companies",
+        loadOptions: loadCompanies,
+        className: "h-9 min-w-[9rem] px-2",
+      },
+      {
+        type: "dateRange",
+        name: "createdAt",
+        label: "Created date",
+        fromKey: "createdFrom",
+        toKey: "createdTo",
+      },
+    ],
+    [loadCompanies, loadRoles, loadStatuses]
+  )
 
   const columns = useMemo<ColumnDef<UsersTableRow>[]>(
     () => [
       {
         id: "select",
         header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
-            aria-label="Select all rows on page"
-          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
+              aria-label="Select all rows on page"
+            />
+            <span className="text-xs text-muted-foreground">#</span>
+          </div>
         ),
         cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-            aria-label={`Select row ${row.original.id}`}
-          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+              aria-label={`Select row ${row.original.id}`}
+            />
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {pagination.pageIndex * pagination.pageSize + row.index + 1}
+            </span>
+          </div>
         ),
         enableSorting: false,
         enableResizing: false,
-        size: 52,
-        minSize: 52,
-        maxSize: 52,
+        size: 88,
       },
       {
         accessorKey: "name",
         header: "Name",
-        size: 220,
-        minSize: 180,
-        maxSize: 320,
         cell: ({ row }) => (
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.name}</span>
@@ -83,31 +162,19 @@ export function UsersPage() {
       {
         accessorKey: "email",
         header: "Email",
-        size: 260,
-        minSize: 220,
-        maxSize: 360,
       },
       {
         accessorKey: "company",
         header: "Company",
-        size: 220,
-        minSize: 180,
-        maxSize: 320,
       },
       {
         accessorKey: "role",
         header: "Role",
-        size: 140,
-        minSize: 120,
-        maxSize: 180,
         cell: ({ row }) => <Badge variant="outline">{row.original.role}</Badge>,
       },
       {
         accessorKey: "status",
         header: "Status",
-        size: 140,
-        minSize: 120,
-        maxSize: 180,
         cell: ({ row }) => (
           <Badge variant={statusVariant(row.original.status)}>{row.original.status}</Badge>
         ),
@@ -115,17 +182,12 @@ export function UsersPage() {
       {
         accessorKey: "createdAt",
         header: "Created",
-        size: 140,
-        minSize: 120,
-        maxSize: 180,
       },
       {
         id: "actions",
         header: "Actions",
         enableSorting: false,
         size: 120,
-        minSize: 100,
-        maxSize: 140,
         cell: () => (
           <Button variant="ghost" size="icon-sm">
             <MoreHorizontalIcon />
@@ -134,7 +196,7 @@ export function UsersPage() {
         ),
       },
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   )
 
   return (
@@ -152,13 +214,14 @@ export function UsersPage() {
         />
       </div>
 
-      <UsersTableToolbar
+      <TableToolbar
         globalSearchInput={globalSearchInput}
         onGlobalSearchChange={setGlobalSearchInput}
+        searchPlaceholder="Search name, username, email, company..."
         filters={filters}
         onFiltersChange={setFilters}
         onReset={resetFilters}
-        loadFilterOptions={loadFilterOptions}
+        fields={fields}
       />
 
       {error ? (

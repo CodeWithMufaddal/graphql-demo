@@ -8,57 +8,72 @@ import type {
   SortingState,
 } from "@tanstack/react-table"
 
-import {
-  fetchFilterOptions,
-  fetchUsersTable,
-  type FilterOptionsRequest,
-  type FilterOptionsResponse,
-  type UsersServerFilters,
-  type UsersTableRow,
-} from "@/features/users/table/users-table-server"
+export type StateUpdater<TState> =
+  | TState
+  | ((previous: TState) => TState)
 
-const defaultFilters: UsersServerFilters = {
-  roles: [],
-  statuses: [],
-  companies: [],
-  createdFrom: "",
-  createdTo: "",
+export type DataTableQuery<TFilters> = {
+  pageIndex: number
+  pageSize: number
+  sorting: SortingState
+  globalSearch: string
+  filters: TFilters
 }
 
-export function useUsersTable() {
+export type DataTableResult<TRow> = {
+  rows: TRow[]
+  totalCount: number
+}
+
+type UseDataTableOptions<TRow, TFilters> = {
+  fetchData: (query: DataTableQuery<TFilters>) => Promise<DataTableResult<TRow>>
+  defaultFilters: TFilters
+  initialPagination?: PaginationState
+  initialSorting?: SortingState
+  initialColumnSizing?: ColumnSizingState
+  initialColumnPinning?: ColumnPinningState
+  initialGlobalSearchInput?: string
+  globalSearchDebounceMs?: number
+  loadingErrorMessage?: string
+}
+
+function applyUpdater<TState>(updater: StateUpdater<TState>, previous: TState) {
+  if (typeof updater === "function") {
+    return (updater as (previous: TState) => TState)(previous)
+  }
+
+  return updater
+}
+
+export function useDataTable<TRow, TFilters>({
+  fetchData,
+  defaultFilters,
+  initialPagination = {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  initialSorting = [],
+  initialColumnSizing = {},
+  initialColumnPinning = {},
+  initialGlobalSearchInput = "",
+  globalSearchDebounceMs = 350,
+  loadingErrorMessage = "Unable to load table data.",
+}: UseDataTableOptions<TRow, TFilters>) {
   const hasLoadedRef = useRef(false)
-  const [rows, setRows] = useState<UsersTableRow[]>([])
+  const [rows, setRows] = useState<TRow[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefetching, setIsRefetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-  const [sorting, setSorting] = useState<SortingState>([
-    {
-      id: "createdAt",
-      desc: true,
-    },
-  ])
+  const [pagination, setPagination] = useState<PaginationState>(initialPagination)
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
-  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({
-    select: 52,
-    name: 220,
-    email: 260,
-    company: 220,
-    createdAt: 140,
-    actions: 120,
-  })
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
-    left: ["select", "name"],
-    right: ["actions"],
-  })
-  const [globalSearchInput, setGlobalSearchInput] = useState("")
-  const [globalSearch, setGlobalSearch] = useState("")
-  const [filters, setFilters] = useState<UsersServerFilters>(defaultFilters)
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(initialColumnSizing)
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(initialColumnPinning)
+  const [globalSearchInput, setGlobalSearchInput] = useState(initialGlobalSearchInput)
+  const [globalSearch, setGlobalSearch] = useState(initialGlobalSearchInput)
+  const [filters, setFiltersState] = useState<TFilters>(defaultFilters)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -67,10 +82,10 @@ export function useUsersTable() {
         ...previous,
         pageIndex: 0,
       }))
-    }, 350)
+    }, globalSearchDebounceMs)
 
     return () => window.clearTimeout(timer)
-  }, [globalSearchInput])
+  }, [globalSearchInput, globalSearchDebounceMs])
 
   const queryParams = useMemo(
     () => ({
@@ -96,7 +111,7 @@ export function useUsersTable() {
       setError(null)
 
       try {
-        const response = await fetchUsersTable(queryParams)
+        const response = await fetchData(queryParams)
 
         if (cancelled) {
           return
@@ -109,9 +124,7 @@ export function useUsersTable() {
         if (cancelled) {
           return
         }
-        setError(
-          fetchError instanceof Error ? fetchError.message : "Unable to load users table data."
-        )
+        setError(fetchError instanceof Error ? fetchError.message : loadingErrorMessage)
         setRows([])
         setTotalCount(0)
       } finally {
@@ -127,18 +140,15 @@ export function useUsersTable() {
     return () => {
       cancelled = true
     }
-  }, [queryParams])
+  }, [fetchData, loadingErrorMessage, queryParams])
 
-  const updateFilters = useCallback(
-    (updater: (previous: UsersServerFilters) => UsersServerFilters) => {
-      setFilters((previous) => updater(previous))
-      setPagination((previous) => ({
-        ...previous,
-        pageIndex: 0,
-      }))
-    },
-    []
-  )
+  const setFilters = useCallback((updater: StateUpdater<TFilters>) => {
+    setFiltersState((previous) => applyUpdater(updater, previous))
+    setPagination((previous) => ({
+      ...previous,
+      pageIndex: 0,
+    }))
+  }, [])
 
   const setSortingAndResetPage = useCallback<OnChangeFn<SortingState>>((updater) => {
     setSorting((previous) =>
@@ -151,24 +161,14 @@ export function useUsersTable() {
   }, [])
 
   const resetFilters = useCallback(() => {
-    setFilters(defaultFilters)
+    setFiltersState(defaultFilters)
     setGlobalSearchInput("")
     setGlobalSearch("")
     setPagination((previous) => ({
       ...previous,
       pageIndex: 0,
     }))
-  }, [])
-
-  const loadFilterOptions = useCallback(
-    async (
-      kind: "roles" | "statuses" | "companies",
-      request: FilterOptionsRequest
-    ): Promise<FilterOptionsResponse> => {
-      return fetchFilterOptions(kind, request)
-    },
-    []
-  )
+  }, [defaultFilters])
 
   return {
     rows,
@@ -189,8 +189,7 @@ export function useUsersTable() {
     globalSearchInput,
     setGlobalSearchInput,
     filters,
-    setFilters: updateFilters,
+    setFilters,
     resetFilters,
-    loadFilterOptions,
   }
 }
