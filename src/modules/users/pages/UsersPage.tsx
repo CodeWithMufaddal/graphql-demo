@@ -1,6 +1,14 @@
-import { useCallback, useMemo } from "react"
-import { MoreHorizontalIcon, TablePropertiesIcon, UsersRoundIcon } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import {
+  PencilIcon,
+  PlusIcon,
+  TablePropertiesIcon,
+  Trash2Icon,
+  UsersRoundIcon,
+} from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
+import { toast } from "sonner"
 
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { ServerDataTable } from "@/components/data-table/server-data-table"
@@ -8,12 +16,14 @@ import {
   TableToolbar,
   type TableToolbarField,
 } from "@/components/data-table/table-toolbar"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useDataTable } from "@/hooks/use-data-table"
 import {
+  deleteUserById,
   fetchFilterOptions,
   fetchUsersTable,
   type FilterOptionsRequest,
@@ -31,6 +41,9 @@ const defaultFilters: UsersServerFilters = {
 }
 
 export function UsersPage() {
+  const navigate = useNavigate()
+  const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null)
+
   const loadRoles = useCallback((request: FilterOptionsRequest) => {
     return fetchFilterOptions("roles", request)
   }, [])
@@ -64,6 +77,7 @@ export function UsersPage() {
     filters,
     setFilters,
     resetFilters,
+    refresh,
   } = useDataTable<UsersTableRow, UsersServerFilters>({
     fetchData: fetchUsersTable,
     defaultFilters,
@@ -81,6 +95,28 @@ export function UsersPage() {
   })
 
   const selectedCount = Object.values(rowSelection).filter(Boolean).length
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) {
+      return false
+    }
+
+    try {
+      await deleteUserById(deleteTarget.id)
+      toast.success(`Deleted ${deleteTarget.name}.`)
+      setRowSelection((previous) => {
+        const next = { ...previous }
+        delete next[deleteTarget.id]
+        return next
+      })
+      refresh()
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete user."
+      toast.error(message)
+      return false
+    }
+  }
 
   const fields = useMemo<TableToolbarField<UsersServerFilters>[]>(
     () => [
@@ -187,16 +223,31 @@ export function UsersPage() {
         id: "actions",
         header: "Actions",
         enableSorting: false,
-        size: 120,
-        cell: () => (
-          <Button variant="ghost" size="icon-sm">
-            <MoreHorizontalIcon />
-            <span className="sr-only">Open row actions</span>
-          </Button>
+        enableResizing: false,
+        size: 96,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => navigate(`/users/${row.original.id}/edit`)}
+            >
+              <PencilIcon />
+              <span className="sr-only">Edit row {row.original.id}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              <Trash2Icon />
+              <span className="sr-only">Delete row {row.original.id}</span>
+            </Button>
+          </div>
         ),
       },
     ],
-    [pagination.pageIndex, pagination.pageSize]
+    [navigate, pagination.pageIndex, pagination.pageSize]
   )
 
   return (
@@ -212,6 +263,15 @@ export function UsersPage() {
           value={selectedCount}
           icon={<TablePropertiesIcon className="text-muted-foreground" />}
         />
+      </div>
+
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link to="/users/new">
+            <PlusIcon data-icon="inline-start" />
+            Create User
+          </Link>
+        </Button>
       </div>
 
       <TableToolbar
@@ -252,6 +312,24 @@ export function UsersPage() {
       <p className="text-xs text-muted-foreground">
         Multi-sort is enabled: click a column header, then Shift+click additional columns.
       </p>
+
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+          }
+        }}
+        title="Delete user"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete ${deleteTarget.name}? This action cannot be undone.`
+            : "Are you sure you want to delete this user?"
+        }
+        confirmLabel="Delete"
+        confirmingLabel="Deleting..."
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

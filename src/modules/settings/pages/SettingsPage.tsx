@@ -8,10 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+import {
+  AutomationSettingsForm,
+  WorkspacePreferencesForm,
+} from "@/modules/settings/forms"
 import { useAuth } from "@/providers/AuthProvider"
 import { type ThemeMode, type ThemePreset, useTheme } from "@/providers/ThemeProvider"
 
@@ -36,46 +37,7 @@ export function SettingsPage() {
             <CardDescription>Form UI ready for GraphQL mutation wiring</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 py-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="workspace-name" className="text-xs font-medium text-muted-foreground">
-                  Workspace name
-                </label>
-                <Input id="workspace-name" defaultValue="Atlas Admin" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label htmlFor="workspace-url" className="text-xs font-medium text-muted-foreground">
-                  Workspace URL
-                </label>
-                <Input id="workspace-url" defaultValue="atlas-admin.local" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="timezone" className="text-xs font-medium text-muted-foreground">
-                Default timezone
-              </label>
-              <Select defaultValue="ist">
-                <SelectTrigger id="timezone" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="ist">Asia/Kolkata (IST)</SelectItem>
-                    <SelectItem value="utc">UTC</SelectItem>
-                    <SelectItem value="pst">America/Los_Angeles (PST)</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="notes" className="text-xs font-medium text-muted-foreground">
-                Admin notes
-              </label>
-              <Textarea id="notes" placeholder="Future mutation body goes here..." />
-            </div>
-            <div className="flex justify-end">
-              <Button>Save Changes</Button>
-            </div>
+            <WorkspacePreferencesForm />
           </CardContent>
         </Card>
 
@@ -127,18 +89,7 @@ export function SettingsPage() {
           <CardDescription>Functional controls only for now</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 py-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm">Daily summary email</span>
-            <Switch defaultChecked />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm">Anomaly alerts</span>
-            <Switch defaultChecked />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm">Auto-close stale tasks</span>
-            <Switch />
-          </div>
+          <AutomationSettingsForm />
           <div className="rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">Active session</p>
             <p className="mt-1 text-sm font-medium">{user?.email ?? "No active session"}</p>

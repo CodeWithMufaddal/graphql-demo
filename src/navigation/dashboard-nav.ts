@@ -65,7 +65,11 @@ export const dashboardNavItems: DashboardNavItem[] = [
 ]
 
 export function resolveNavItem(pathname: string) {
-  return dashboardNavItems.find((item) => pathname === item.path) ?? dashboardNavItems[0]
+  return (
+    dashboardNavItems.find(
+      (item) => pathname === item.path || pathname.startsWith(`${item.path}/`)
+    ) ?? dashboardNavItems[0]
+  )
 }
 
 export const workspaceNavItems = dashboardNavItems.filter(

@@ -12,6 +12,18 @@ export type UserDirectoryRow = {
   website: string | null
   company: {
     name: string
+    catchPhrase: string | null
+    bs: string | null
+  } | null
+  address: {
+    city: string | null
+    street: string | null
+    suite: string | null
+    zipcode: string | null
+    geo: {
+      lat: string | null
+      lng: string | null
+    } | null
   } | null
 }
 

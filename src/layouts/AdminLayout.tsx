@@ -77,8 +77,12 @@ function NavigationGroup({
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <SidebarMenuItem key={item.path}>
-            <SidebarMenuButton asChild isActive={pathname === item.path} tooltip={item.title}>
+            <SidebarMenuItem key={item.path}>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === item.path || pathname.startsWith(`${item.path}/`)}
+              tooltip={item.title}
+            >
               <NavLink to={item.path}>
                 <item.icon />
                 <span>{item.title}</span>

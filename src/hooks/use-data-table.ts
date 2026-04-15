@@ -74,6 +74,7 @@ export function useDataTable<TRow, TFilters>({
   const [globalSearchInput, setGlobalSearchInput] = useState(initialGlobalSearchInput)
   const [globalSearch, setGlobalSearch] = useState(initialGlobalSearchInput)
   const [filters, setFiltersState] = useState<TFilters>(defaultFilters)
+  const [refreshNonce, setRefreshNonce] = useState(0)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -94,8 +95,9 @@ export function useDataTable<TRow, TFilters>({
       sorting,
       globalSearch,
       filters,
+      refreshNonce,
     }),
-    [pagination.pageIndex, pagination.pageSize, sorting, globalSearch, filters]
+    [pagination.pageIndex, pagination.pageSize, sorting, globalSearch, filters, refreshNonce]
   )
 
   useEffect(() => {
@@ -170,6 +172,10 @@ export function useDataTable<TRow, TFilters>({
     }))
   }, [defaultFilters])
 
+  const refresh = useCallback(() => {
+    setRefreshNonce((previous) => previous + 1)
+  }, [])
+
   return {
     rows,
     totalCount,
@@ -191,5 +197,6 @@ export function useDataTable<TRow, TFilters>({
     filters,
     setFilters,
     resetFilters,
+    refresh,
   }
 }

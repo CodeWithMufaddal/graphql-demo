@@ -42,6 +42,9 @@ const SettingsPage = lazy(() =>
 const UsersPage = lazy(() =>
   import("@/modules/users").then((module) => ({ default: module.UsersPage }))
 )
+const UserEditorPage = lazy(() =>
+  import("@/modules/users").then((module) => ({ default: module.UserEditorPage }))
+)
 
 function RouteLoader() {
   return (
@@ -68,6 +71,8 @@ function App() {
           <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/users/new" element={<UserEditorPage />} />
+          <Route path="/users/:id/edit" element={<UserEditorPage />} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/query-studio" element={<QueryStudioPage />} />
