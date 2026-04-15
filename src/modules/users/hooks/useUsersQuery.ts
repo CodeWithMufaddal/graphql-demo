@@ -4,7 +4,7 @@ import {
   GET_USERS_QUERY,
   type GetUsersQueryData,
   type GetUsersQueryVariables,
-} from "../graphql/queries"
+} from "@/modules/users/graphql"
 
 type UseUsersQueryParams = {
   page?: number

@@ -19,7 +19,7 @@ import {
   type FilterOptionsRequest,
   type UsersServerFilters,
   type UsersTableRow,
-} from "@/features/users/table/users-table-server"
+} from "@/modules/users/endpoints"
 import { statusVariant } from "@/features/dashboard/ui-utils"
 
 const defaultFilters: UsersServerFilters = {

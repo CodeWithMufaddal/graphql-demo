@@ -1,6 +1,6 @@
 import type { SortingState } from "@tanstack/react-table"
 
-import { GET_USERS_QUERY, type UserDirectoryRow } from "@/features/users/graphql/queries"
+import { GET_USERS_QUERY, type UserDirectoryRow } from "@/modules/users/graphql"
 import { apolloClient } from "@/lib/apollo/client"
 
 export type UserStatus = "Active" | "Invited" | "Suspended"

@@ -7,30 +7,40 @@ const AdminLayout = lazy(() =>
   import("@/layouts/AdminLayout").then((module) => ({ default: module.AdminLayout }))
 )
 const BillingPage = lazy(() =>
-  import("@/pages/BillingPage").then((module) => ({ default: module.BillingPage }))
+  import("@/modules/billing").then((module) => ({
+    default: module.BillingPage,
+  }))
 )
 const LoginPage = lazy(() =>
-  import("@/pages/LoginPage").then((module) => ({ default: module.LoginPage }))
+  import("@/modules/auth").then((module) => ({ default: module.LoginPage }))
 )
 const MutationStudioPage = lazy(() =>
-  import("@/pages/MutationStudioPage").then((module) => ({
+  import("@/modules/studio").then((module) => ({
     default: module.MutationStudioPage,
   }))
 )
 const NotFoundPage = lazy(() =>
-  import("@/pages/NotFoundPage").then((module) => ({ default: module.NotFoundPage }))
+  import("@/modules/system").then((module) => ({
+    default: module.NotFoundPage,
+  }))
 )
 const OverviewPage = lazy(() =>
-  import("@/pages/OverviewPage").then((module) => ({ default: module.OverviewPage }))
+  import("@/modules/dashboard").then((module) => ({
+    default: module.OverviewPage,
+  }))
 )
 const QueryStudioPage = lazy(() =>
-  import("@/pages/QueryStudioPage").then((module) => ({ default: module.QueryStudioPage }))
+  import("@/modules/studio").then((module) => ({
+    default: module.QueryStudioPage,
+  }))
 )
 const SettingsPage = lazy(() =>
-  import("@/pages/SettingsPage").then((module) => ({ default: module.SettingsPage }))
+  import("@/modules/settings").then((module) => ({
+    default: module.SettingsPage,
+  }))
 )
 const UsersPage = lazy(() =>
-  import("@/pages/UsersPage").then((module) => ({ default: module.UsersPage }))
+  import("@/modules/users").then((module) => ({ default: module.UsersPage }))
 )
 
 function RouteLoader() {
