@@ -42,14 +42,3 @@ export const GET_POSTS_QUERY: TypedDocumentNode<
   }
   ${POST_CARD_FIELDS_FRAGMENT}
 `;
-
-export const GET_USER = gql`
-  query GetUser($id: ID!) {
-    user(id: $id) {
-      id
-      name
-      username
-      email
-    }
-  }
-`;
