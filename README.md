@@ -16,6 +16,13 @@ VITE_GRAPHQL_API_URL=https://graphqlzero.almansi.me/api
 
 3. Apollo Provider is already wired in `src/main.tsx` through `src/providers/AppProviders.tsx`.
 
+## Step 2 Query Layer
+
+- Reusable GraphQL fragment: `src/features/posts/graphql/fragments.ts`
+- Typed query document: `src/features/posts/graphql/queries.ts`
+- UI-facing hook: `src/features/posts/hooks/usePostsQuery.ts`
+- Screen usage: `src/App.tsx`
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
