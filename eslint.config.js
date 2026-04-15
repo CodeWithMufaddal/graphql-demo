@@ -32,4 +32,10 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['src/components/data-table/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/incompatible-library': 'off',
+    },
+  },
 ])

@@ -158,7 +158,7 @@ export function AdminLayout() {
         <SidebarFooter>
           <div className="flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-2">
             <Avatar>
-              <AvatarImage src="https://i.pravatar.cc/100?img=16" alt="You" />
+              <AvatarImage src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png?img=16" alt="You" />
               <AvatarFallback>
                 {user?.name
                   ?.split(" ")
@@ -228,7 +228,7 @@ export function AdminLayout() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2 px-2.5">
                     <Avatar size="sm">
-                      <AvatarImage src="https://i.pravatar.cc/100?img=16" alt="You" />
+                      <AvatarImage src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="You" />
                       <AvatarFallback>YN</AvatarFallback>
                     </Avatar>
                     <span className="hidden md:inline">Profile</span>
