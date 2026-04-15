@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react"
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom"
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
   BellIcon,
   ChartColumnIncreasingIcon,
   FilterIcon,
   LogOutIcon,
+  MonitorCogIcon,
+  MoonStarIcon,
   PlusIcon,
   SearchIcon,
   SparklesIcon,
+  SunIcon,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -53,7 +56,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/providers/AuthProvider"
+import { type ThemeMode, useTheme } from "@/providers/ThemeProvider"
 import {
+  graphqlNavItems,
   managementNavItems,
   resolveNavItem,
   routeHighlights,
@@ -90,9 +96,29 @@ function NavigationGroup({
 }
 
 export function AdminLayout() {
+  const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { logout, user } = useAuth()
+  const { mode, setMode, preset } = useTheme()
   const [sheetOpen, setSheetOpen] = useState(false)
   const currentNav = useMemo(() => resolveNavItem(pathname), [pathname])
+
+  function handleLogout() {
+    logout()
+    navigate("/login", { replace: true })
+  }
+
+  function renderModeIcon(modeValue: ThemeMode) {
+    if (modeValue === "light") {
+      return <SunIcon />
+    }
+
+    if (modeValue === "dark") {
+      return <MoonStarIcon />
+    }
+
+    return <MonitorCogIcon />
+  }
 
   return (
     <SidebarProvider defaultOpen>
@@ -115,6 +141,8 @@ export function AdminLayout() {
           <SidebarSeparator />
           <NavigationGroup title="Management" items={managementNavItems} pathname={pathname} />
           <SidebarSeparator />
+          <NavigationGroup title="GraphQL Studio" items={graphqlNavItems} pathname={pathname} />
+          <SidebarSeparator />
           <SidebarGroup>
             <SidebarGroupLabel>System</SidebarGroupLabel>
             <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
@@ -131,11 +159,17 @@ export function AdminLayout() {
           <div className="flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-2">
             <Avatar>
               <AvatarImage src="https://i.pravatar.cc/100?img=16" alt="You" />
-              <AvatarFallback>YN</AvatarFallback>
+              <AvatarFallback>
+                {user?.name
+                  ?.split(" ")
+                  .map((segment) => segment.charAt(0))
+                  .join("")
+                  .slice(0, 2) ?? "YN"}
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">You</p>
-              <p className="truncate text-xs text-sidebar-foreground/70">GraphQL Learner</p>
+              <p className="truncate text-sm font-medium">{user?.name ?? "You"}</p>
+              <p className="truncate text-xs text-sidebar-foreground/70">{user?.email ?? "GraphQL Learner"}</p>
             </div>
           </div>
         </SidebarFooter>
@@ -205,10 +239,28 @@ export function AdminLayout() {
                   <DropdownMenuGroup>
                     <DropdownMenuItem>View profile</DropdownMenuItem>
                     <DropdownMenuItem>Notification settings</DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings">Theme & appearance</Link>
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMode("light")}>
+                      <SunIcon />
+                      Light mode
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMode("dark")}>
+                      <MoonStarIcon />
+                      Dark mode
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setMode("system")}>
+                      <MonitorCogIcon />
+                      System mode
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={handleLogout}>
                       <LogOutIcon />
                       Log out
                     </DropdownMenuItem>
@@ -235,7 +287,13 @@ export function AdminLayout() {
                   </div>
                 ))}
                 <div className="rounded-xl border bg-card/80 p-4">
-                  <Badge variant="secondary">Route: {currentNav.path}</Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="secondary">Route: {currentNav.path}</Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {renderModeIcon(mode)}
+                      {mode} / {preset}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </div>

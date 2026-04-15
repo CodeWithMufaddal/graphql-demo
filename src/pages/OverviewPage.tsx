@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom"
+import { DatabaseZapIcon, FileCode2Icon } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -115,6 +118,37 @@ export function OverviewPage() {
                 ))}
               </div>
             </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2">
+              <DatabaseZapIcon className="size-5" />
+              Query Studio
+            </CardTitle>
+            <CardDescription>All GraphQLZero fetch operations prepared</CardDescription>
+          </CardHeader>
+          <CardContent className="py-4">
+            <Button asChild>
+              <Link to="/query-studio">Open Query Studio</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2">
+              <FileCode2Icon className="size-5" />
+              Mutation Studio
+            </CardTitle>
+            <CardDescription>Create, update, and delete operation templates</CardDescription>
+          </CardHeader>
+          <CardContent className="py-4">
+            <Button asChild variant="outline">
+              <Link to="/mutation-studio">Open Mutation Studio</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

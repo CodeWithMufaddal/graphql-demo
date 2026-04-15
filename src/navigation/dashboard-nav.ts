@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react"
 import {
   CircleDollarSignIcon,
+  DatabaseZapIcon,
+  FileCode2Icon,
   LayoutDashboardIcon,
   Settings2Icon,
   ShieldCheckIcon,
@@ -13,7 +15,7 @@ export type DashboardNavItem = {
   description: string
   icon: LucideIcon
   badge?: string
-  group: "workspace" | "management"
+  group: "workspace" | "management" | "graphql"
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -46,6 +48,20 @@ export const dashboardNavItems: DashboardNavItem[] = [
     icon: Settings2Icon,
     group: "management",
   },
+  {
+    path: "/query-studio",
+    title: "Query Studio",
+    description: "GraphQLZero query templates and controls",
+    icon: DatabaseZapIcon,
+    group: "graphql",
+  },
+  {
+    path: "/mutation-studio",
+    title: "Mutation Studio",
+    description: "Create/update/delete operation templates",
+    icon: FileCode2Icon,
+    group: "graphql",
+  },
 ]
 
 export function resolveNavItem(pathname: string) {
@@ -58,6 +74,10 @@ export const workspaceNavItems = dashboardNavItems.filter(
 
 export const managementNavItems = dashboardNavItems.filter(
   (item) => item.group === "management"
+)
+
+export const graphqlNavItems = dashboardNavItems.filter(
+  (item) => item.group === "graphql"
 )
 
 export const routeHighlights = [
