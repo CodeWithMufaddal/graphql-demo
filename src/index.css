@@ -80,6 +80,10 @@ body {
     var(--background);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @theme inline {
   --font-sans: "Geist Variable", "Segoe UI", sans-serif;
   --font-heading: "Geist Variable", "Segoe UI", sans-serif;
@@ -160,6 +164,32 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--muted-foreground) 62%, transparent);
+    background-clip: padding-box;
   }
 
   html,
