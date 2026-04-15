@@ -81,7 +81,26 @@ body {
 }
 
 html {
+  overflow-y: auto;
   scrollbar-gutter: stable;
+}
+
+html body[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0px !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+html body[data-scroll-locked].with-scroll-bars-hidden {
+  padding-right: 0 !important;
+}
+
+html body[data-scroll-locked] .right-scroll-bar-position {
+  right: 0 !important;
+}
+
+html body[data-scroll-locked] .width-before-scroll-bar {
+  margin-right: 0 !important;
 }
 
 @theme inline {

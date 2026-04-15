@@ -76,9 +76,14 @@ export function MutationStudioPage() {
         <CardContent className="grid gap-4 py-4">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Mutation type</label>
+              <label
+                htmlFor="mutation-type"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Mutation type
+              </label>
               <Select value={mode} onValueChange={(value) => setMode(value as MutationMode)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="mutation-type" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -91,9 +96,9 @@ export function MutationStudioPage() {
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Resource</label>
+              <label htmlFor="mutation-resource" className="text-xs font-medium text-muted-foreground">Resource</label>
               <Select value={resource} onValueChange={(value) => setResource(value as Resource)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="mutation-resource" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -108,14 +113,14 @@ export function MutationStudioPage() {
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">ID (when needed)</label>
-              <Input value={resourceId} onChange={(event) => setResourceId(event.target.value)} />
+              <label htmlFor="mutation-resource-id" className="text-xs font-medium text-muted-foreground">ID (when needed)</label>
+              <Input id="mutation-resource-id" value={resourceId} onChange={(event) => setResourceId(event.target.value)} />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-medium text-muted-foreground">Input payload draft</label>
-            <Textarea value={payload} onChange={(event) => setPayload(event.target.value)} />
+            <label htmlFor="mutation-payload" className="text-xs font-medium text-muted-foreground">Input payload draft</label>
+            <Textarea id="mutation-payload" value={payload} onChange={(event) => setPayload(event.target.value)} />
           </div>
 
           <div className="rounded-lg border bg-card/70 p-4">

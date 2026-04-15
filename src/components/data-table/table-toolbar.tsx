@@ -142,6 +142,7 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
             value={globalSearchInput}
             onChange={(event) => onGlobalSearchChange(event.target.value)}
             placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
             className="h-9 pl-8"
           />
         </div>

@@ -66,9 +66,14 @@ export function QueryStudioPage() {
         <CardContent className="grid gap-4 py-4">
           <div className="grid gap-3 md:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Entity query</label>
+              <label
+                htmlFor="query-entity"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Entity query
+              </label>
               <Select value={entity} onValueChange={(value) => setEntity(value as typeof entity)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="query-entity" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -85,18 +90,18 @@ export function QueryStudioPage() {
             {isListQuery ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-muted-foreground">Page</label>
-                  <Input value={page} onChange={(event) => setPage(event.target.value)} />
+                  <label htmlFor="query-page" className="text-xs font-medium text-muted-foreground">Page</label>
+                  <Input id="query-page" value={page} onChange={(event) => setPage(event.target.value)} />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-muted-foreground">Limit</label>
-                  <Input value={limit} onChange={(event) => setLimit(event.target.value)} />
+                  <label htmlFor="query-limit" className="text-xs font-medium text-muted-foreground">Limit</label>
+                  <Input id="query-limit" value={limit} onChange={(event) => setLimit(event.target.value)} />
                 </div>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-muted-foreground">Resource ID</label>
-                <Input value={resourceId} onChange={(event) => setResourceId(event.target.value)} />
+                <label htmlFor="query-resource-id" className="text-xs font-medium text-muted-foreground">Resource ID</label>
+                <Input id="query-resource-id" value={resourceId} onChange={(event) => setResourceId(event.target.value)} />
               </div>
             )}
           </div>

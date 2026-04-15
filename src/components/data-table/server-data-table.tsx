@@ -113,7 +113,11 @@ export function ServerDataTable<TData>({
     <div className="flex min-w-0 flex-col gap-3">
       <div className="relative max-w-full min-w-0 overflow-hidden rounded-lg border bg-card">
         <div className="max-w-full min-w-0">
-          <Table className="table-fixed" style={{ width: `${table.getTotalSize()}px`, minWidth: "100%" }}>
+          <Table
+            className="table-fixed"
+            style={{ width: `${table.getTotalSize()}px`, minWidth: "100%" }}
+            aria-busy={isLoading || isRefetching}
+          >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -251,7 +255,7 @@ export function ServerDataTable<TData>({
               table.setPageSize(Number(value))
             }
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[120px]" aria-label="Rows per page">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

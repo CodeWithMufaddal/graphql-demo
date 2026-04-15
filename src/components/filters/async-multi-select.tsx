@@ -165,7 +165,11 @@ export function AsyncMultiSelect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={cn("justify-between", className)}>
+        <Button
+          variant="outline"
+          className={cn("justify-between", className)}
+          aria-label={`Filter by ${label}`}
+        >
           <span className="truncate">
             {summarizeSelection(label, selected, mergedLabelMap)}
           </span>
@@ -178,6 +182,7 @@ export function AsyncMultiSelect({
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder={placeholder}
+            aria-label={`${label} filter search`}
           />
           <div
             onScroll={handleScroll}
@@ -220,7 +225,11 @@ export function AsyncMultiSelect({
             {selected.map((item) => (
               <Badge key={item} variant="secondary" className="gap-1">
                 {mergedLabelMap[item] ?? item}
-                <button type="button" onClick={() => toggleValue(item)}>
+                <button
+                  type="button"
+                  onClick={() => toggleValue(item)}
+                  aria-label={`Remove ${mergedLabelMap[item] ?? item}`}
+                >
                   <XIcon className="size-3" />
                 </button>
               </Badge>

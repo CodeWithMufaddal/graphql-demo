@@ -1,6 +1,7 @@
-import { Suspense, lazy } from "react"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Suspense, lazy, useEffect, useMemo } from "react"
+import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 
+import { resolveNavItem } from "@/navigation/dashboard-nav"
 import { RequireAuth } from "@/routes/RequireAuth"
 
 const AdminLayout = lazy(() =>
@@ -56,31 +57,108 @@ function RouteLoader() {
   )
 }
 
+type RouteMetadata = {
+  title: string
+  description: string
+}
+
+function resolveRouteMetadata(pathname: string): RouteMetadata {
+  if (pathname === "/login") {
+    return {
+      title: "Sign In | Atlas Admin",
+      description: "Sign in to access the Atlas Admin GraphQL workspace.",
+    }
+  }
+
+  if (pathname === "/users/new") {
+    return {
+      title: "Create User | Atlas Admin",
+      description: "Create a new user record with validated profile, company, and address details.",
+    }
+  }
+
+  if (/^\/users\/[^/]+\/edit$/.test(pathname)) {
+    return {
+      title: "Edit User | Atlas Admin",
+      description: "Update existing user profile data in Atlas Admin.",
+    }
+  }
+
+  if (pathname === "/") {
+    return {
+      title: "Overview | Atlas Admin",
+      description: "Command center and KPI snapshots for your GraphQL workspace.",
+    }
+  }
+
+  const navItem = resolveNavItem(pathname)
+  const isKnownRoute =
+    pathname === navItem.path || pathname.startsWith(`${navItem.path}/`)
+
+  if (isKnownRoute) {
+    return {
+      title: `${navItem.title} | Atlas Admin`,
+      description: navItem.description,
+    }
+  }
+
+  return {
+    title: "Page Not Found | Atlas Admin",
+    description: "The requested route does not exist in this admin workspace.",
+  }
+}
+
+function RouteMetadataManager() {
+  const { pathname } = useLocation()
+  const metadata = useMemo(() => resolveRouteMetadata(pathname), [pathname])
+
+  useEffect(() => {
+    document.title = metadata.title
+
+    let descriptionTag = document.querySelector<HTMLMetaElement>(
+      'meta[name="description"]'
+    )
+
+    if (!descriptionTag) {
+      descriptionTag = document.createElement("meta")
+      descriptionTag.name = "description"
+      document.head.appendChild(descriptionTag)
+    }
+
+    descriptionTag.content = metadata.description
+  }, [metadata])
+
+  return null
+}
+
 function App() {
   return (
-    <Suspense fallback={<RouteLoader />}>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          element={
-            <RequireAuth>
-              <AdminLayout />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<Navigate to="/overview" replace />} />
-          <Route path="/overview" element={<OverviewPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/users/new" element={<UserEditorPage />} />
-          <Route path="/users/:id/edit" element={<UserEditorPage />} />
-          <Route path="/billing" element={<BillingPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/query-studio" element={<QueryStudioPage />} />
-          <Route path="/mutation-studio" element={<MutationStudioPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </Suspense>
+    <>
+      <RouteMetadataManager />
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            element={
+              <RequireAuth>
+                <AdminLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Navigate to="/overview" replace />} />
+            <Route path="/overview" element={<OverviewPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/new" element={<UserEditorPage />} />
+            <Route path="/users/:id/edit" element={<UserEditorPage />} />
+            <Route path="/billing" element={<BillingPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/query-studio" element={<QueryStudioPage />} />
+            <Route path="/mutation-studio" element={<MutationStudioPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </>
   )
 }
 

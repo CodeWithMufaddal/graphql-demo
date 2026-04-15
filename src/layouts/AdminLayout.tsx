@@ -111,6 +111,12 @@ export function AdminLayout() {
 
   return (
     <SidebarProvider defaultOpen>
+      <a
+        href="#main-content"
+        className="sr-only fixed top-2 left-2 z-[60] rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only"
+      >
+        Skip to main content
+      </a>
       <Sidebar collapsible="icon" variant="inset">
         <SidebarHeader className="gap-3">
           <Link to="/overview" className="flex items-center gap-2 rounded-lg border bg-sidebar-accent/40 px-2 py-1.5">
@@ -122,34 +128,42 @@ export function AdminLayout() {
               <span className="truncate text-xs text-sidebar-foreground/70">Navigation Architecture</span>
             </div>
           </Link>
-          <SidebarInput placeholder="Search routes..." />
+          <SidebarInput placeholder="Search routes..." aria-label="Search routes" />
         </SidebarHeader>
 
         <SidebarContent>
-          <NavigationGroup title="Workspace" items={workspaceNavItems} pathname={pathname} />
-          <SidebarSeparator />
-          <NavigationGroup title="Management" items={managementNavItems} pathname={pathname} />
-          <SidebarSeparator />
-          <NavigationGroup title="GraphQL Studio" items={graphqlNavItems} pathname={pathname} />
-          <SidebarSeparator />
-          <SidebarGroup>
-            <SidebarGroupLabel>System</SidebarGroupLabel>
-            <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
-              <div className="mb-2 flex items-center gap-2 text-xs font-medium">
-                <SparklesIcon className="size-4" />
-                GraphQL Learning Mode
+          <nav aria-label="Primary">
+            <NavigationGroup title="Workspace" items={workspaceNavItems} pathname={pathname} />
+            <SidebarSeparator />
+            <NavigationGroup title="Management" items={managementNavItems} pathname={pathname} />
+            <SidebarSeparator />
+            <NavigationGroup title="GraphQL Studio" items={graphqlNavItems} pathname={pathname} />
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>System</SidebarGroupLabel>
+              <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium">
+                  <SparklesIcon className="size-4" />
+                  GraphQL Learning Mode
+                </div>
+                <div className="h-1.5 rounded-full bg-sidebar-border">
+                  <div className="h-full w-[68%] rounded-full bg-sidebar-primary" />
+                </div>
               </div>
-              <div className="h-1.5 rounded-full bg-sidebar-border">
-                <div className="h-full w-[68%] rounded-full bg-sidebar-primary" />
-              </div>
-            </div>
-          </SidebarGroup>
+            </SidebarGroup>
+          </nav>
         </SidebarContent>
 
         <SidebarFooter>
           <div className="flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-2">
             <Avatar>
-              <AvatarImage src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png?img=16" alt="You" />
+              <AvatarImage
+                src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png?img=16"
+                alt={`${user?.name ?? "User"} avatar`}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+              />
               <AvatarFallback>
                 {user?.name
                   ?.split(" ")
@@ -189,10 +203,14 @@ export function AdminLayout() {
             <div className="flex items-center gap-2">
               <div className="relative hidden lg:block">
                 <SearchIcon className="pointer-events-none absolute top-2 left-2 size-4 text-muted-foreground" />
-                <Input className="w-64 pl-8" placeholder="Search users, campaigns..." />
+                <Input
+                  className="w-64 pl-8"
+                  placeholder="Search users, campaigns..."
+                  aria-label="Search users or campaigns"
+                />
               </div>
               <Select defaultValue="30d">
-                <SelectTrigger className="hidden min-w-28 md:flex">
+                <SelectTrigger className="hidden min-w-28 md:flex" aria-label="Select date range">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent align="end">
@@ -211,7 +229,7 @@ export function AdminLayout() {
                 <PlusIcon data-icon="inline-start" />
                 New
               </Button>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Open notifications">
                 <BellIcon />
                 <span className="sr-only">Notifications</span>
               </Button>
@@ -219,7 +237,13 @@ export function AdminLayout() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2 px-2.5">
                     <Avatar size="sm">
-                      <AvatarImage src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="You" />
+                      <AvatarImage
+                        src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png"
+                        alt={`${user?.name ?? "User"} avatar`}
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
+                      />
                       <AvatarFallback>YN</AvatarFallback>
                     </Avatar>
                     <span className="hidden md:inline">Profile</span>
@@ -261,7 +285,11 @@ export function AdminLayout() {
             </div>
           </header>
 
-          <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-x-hidden p-4 md:p-6">
+          <main
+            id="main-content"
+            className="flex min-w-0 flex-1 flex-col gap-4 overflow-x-hidden p-4 md:p-6"
+          >
+            <h1 className="sr-only">{currentNav.title}</h1>
             <Outlet />
           </main>
 
@@ -271,8 +299,18 @@ export function AdminLayout() {
               <SheetDescription>UI-only form for now. Add a GraphQL mutation later.</SheetDescription>
             </SheetHeader>
             <div className="flex flex-col gap-4 px-4">
-              <Input placeholder="Campaign name" />
-              <Textarea placeholder="Brief..." />
+              <div className="flex flex-col gap-2">
+                <label htmlFor="campaign-name" className="text-xs font-medium text-muted-foreground">
+                  Campaign name
+                </label>
+                <Input id="campaign-name" placeholder="Campaign name" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="campaign-brief" className="text-xs font-medium text-muted-foreground">
+                  Brief
+                </label>
+                <Textarea id="campaign-brief" placeholder="Brief..." />
+              </div>
             </div>
             <SheetFooter>
               <Button variant="outline" onClick={() => setSheetOpen(false)}>
