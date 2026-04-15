@@ -110,26 +110,44 @@ export function ServerDataTable<TData>({
   const end = Math.min(totalCount, (pagination.pageIndex + 1) * pagination.pageSize)
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative overflow-hidden rounded-lg border bg-card">
-        <div className="overflow-x-auto">
-          <Table className="min-w-[980px] table-fixed">
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="relative max-w-full min-w-0 overflow-hidden rounded-lg border bg-card">
+        <div className="max-w-full min-w-0">
+          <Table className="table-fixed" style={{ width: `${table.getTotalSize()}px`, minWidth: "100%" }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const column = header.column
                     const canSort = header.column.getCanSort()
                     const sortDirection = header.column.getIsSorted()
                     const sortIndex = header.column.getSortIndex()
+                    const isPinned = column.getIsPinned()
+                    const isLastLeftPinnedColumn =
+                      isPinned === "left" && column.getIsLastColumn("left")
+                    const isFirstRightPinnedColumn =
+                      isPinned === "right" && column.getIsFirstColumn("right")
+
+                    const headerPinningStyles: CSSProperties = {
+                      width: header.getSize(),
+                      minWidth: header.column.columnDef.minSize,
+                      maxWidth: header.column.columnDef.maxSize,
+                      position: isPinned ? "sticky" : "relative",
+                      left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
+                      right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
+                      zIndex: isPinned ? 4 : 3,
+                      background: "var(--color-card)",
+                      boxShadow: isLastLeftPinnedColumn
+                        ? "-4px 0 6px -6px rgba(0,0,0,0.35) inset"
+                        : isFirstRightPinnedColumn
+                          ? "4px 0 6px -6px rgba(0,0,0,0.35) inset"
+                          : undefined,
+                    }
 
                     return (
                       <TableHead
                         key={header.id}
-                        style={{
-                          width: header.getSize(),
-                          minWidth: header.column.columnDef.minSize,
-                          maxWidth: header.column.columnDef.maxSize,
-                        }}
+                        style={headerPinningStyles}
                         className="relative bg-card px-2"
                       >
                         {header.isPlaceholder ? null : (

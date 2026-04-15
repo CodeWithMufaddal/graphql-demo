@@ -144,8 +144,8 @@ export function UsersPage() {
   )
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid min-w-0 gap-4">
+      <div className="grid min-w-0 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="border-b">
             <CardDescription>Total records</CardDescription>

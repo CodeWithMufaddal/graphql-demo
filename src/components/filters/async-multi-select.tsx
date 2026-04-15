@@ -3,7 +3,6 @@ import { CheckIcon, ChevronsUpDownIcon, LoaderCircleIcon, XIcon } from "lucide-r
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -159,14 +158,21 @@ export function AsyncMultiSelect({
                 <button
                   type="button"
                   key={option.value}
-                  className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                    selectedSet.has(option.value)
+                      ? "bg-primary/12 text-primary hover:bg-primary/18"
+                      : "hover:bg-muted"
+                  )}
                   onClick={() => toggleValue(option.value)}
                 >
-                  <div className="flex items-center gap-2">
-                    <Checkbox checked={selectedSet.has(option.value)} />
-                    <span className="truncate">{option.label}</span>
-                  </div>
-                  {selectedSet.has(option.value) ? <CheckIcon className="size-3.5" /> : null}
+                  <span className="truncate">{option.label}</span>
+                  <CheckIcon
+                    className={cn(
+                      "size-3.5 transition-opacity",
+                      selectedSet.has(option.value) ? "opacity-100" : "opacity-0"
+                    )}
+                  />
                 </button>
               ))}
               {!isLoading && options.length === 0 ? (
