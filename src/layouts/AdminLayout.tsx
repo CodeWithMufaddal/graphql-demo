@@ -13,7 +13,7 @@ import {
   SunIcon,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -157,13 +157,6 @@ export function AdminLayout() {
         <SidebarFooter>
           <div className="flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-2">
             <Avatar>
-              <AvatarImage
-                src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png?img=16"
-                alt={`${user?.name ?? "User"} avatar`}
-                loading="lazy"
-                decoding="async"
-                fetchPriority="low"
-              />
               <AvatarFallback>
                 {user?.name
                   ?.split(" ")
@@ -237,14 +230,13 @@ export function AdminLayout() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2 px-2.5">
                     <Avatar size="sm">
-                      <AvatarImage
-                        src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png"
-                        alt={`${user?.name ?? "User"} avatar`}
-                        loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
-                      />
-                      <AvatarFallback>YN</AvatarFallback>
+                      <AvatarFallback>
+                        {user?.name
+                          ?.split(" ")
+                          .map((segment) => segment.charAt(0))
+                          .join("")
+                          .slice(0, 2) ?? "YN"}
+                      </AvatarFallback>
                     </Avatar>
                     <span className="hidden md:inline">Profile</span>
                   </Button>

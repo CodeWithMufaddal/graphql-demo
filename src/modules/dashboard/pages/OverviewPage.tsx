@@ -35,7 +35,10 @@ export function OverviewPage() {
                   </Badge>
                   <span className="text-xs text-muted-foreground">{metric.subtitle}</span>
                 </div>
-                <Progress value={metric.progress} />
+                <Progress
+                  value={metric.progress}
+                  aria-label={`${metric.title} progress`}
+                />
               </div>
             }
           />
