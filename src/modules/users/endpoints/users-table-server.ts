@@ -1,10 +1,6 @@
 import type { DataTableQuery, DataTableResult } from "@/hooks/use-data-table"
-import type {
-  FilterOptionsRequest,
-  FilterOptionsResponse,
-} from "@/lib/data-table/local-table-workflow"
 import { apolloClient } from "@/lib/apollo/client"
-import type { OperatorInput, PageQueryOptionsInput } from "@/lib/graphql/types"
+import type { PageQueryOptionsInput } from "@/lib/graphql/types"
 import {
   CREATE_USER_MUTATION,
   DELETE_USER_BY_ID_MUTATION,
@@ -14,12 +10,6 @@ import {
   type UserDirectoryRow,
   type UserInput,
 } from "@/modules/users/graphql"
-
-export type {
-  FilterOption,
-  FilterOptionsRequest,
-  FilterOptionsResponse,
-} from "@/lib/data-table/local-table-workflow"
 
 export type UserMutationInput = UserInput
 
@@ -33,9 +23,7 @@ export type UsersTableRow = {
   company: string
 }
 
-export type UsersServerFilters = {
-  companies: string[]
-}
+export type UsersServerFilters = Record<string, never>
 
 export type UsersServerQuery = DataTableQuery<UsersServerFilters>
 
@@ -168,25 +156,12 @@ function toSortField(columnId: string) {
   }
 }
 
-function toCompanyOperators(filters: UsersServerFilters): OperatorInput[] | undefined {
-  if (filters.companies.length === 0) {
-    return undefined
-  }
-
-  return filters.companies.map((company) => ({
-    field: "company.name",
-    kind: "LIKE",
-    value: company,
-  }))
-}
-
 function buildUsersOptions(
   query: UsersServerQuery,
   limit: number
 ): PageQueryOptionsInput {
   const searchQuery = query.globalSearch.trim()
   const firstSort = query.sorting[0]
-  const operators = toCompanyOperators(query.filters)
   const sortField = firstSort ? toSortField(firstSort.id) : undefined
 
   return {
@@ -202,7 +177,6 @@ function buildUsersOptions(
             order: firstSort.desc ? "DESC" : "ASC",
           }
         : undefined,
-    operators,
   }
 }
 
@@ -230,29 +204,6 @@ function invalidateUsersCache() {
     fieldName: "user",
   })
   apolloClient.cache.gc()
-}
-
-function buildCompanyResponse(rows: UserDirectoryRow[], hasMore: boolean): FilterOptionsResponse {
-  const seen = new Set<string>()
-  const values: string[] = []
-
-  for (const row of rows) {
-    const companyName = row.company?.name?.trim()
-    if (!companyName || seen.has(companyName)) {
-      continue
-    }
-
-    seen.add(companyName)
-    values.push(companyName)
-  }
-
-  return {
-    options: values.map((value) => ({
-      label: value,
-      value,
-    })),
-    hasMore,
-  }
 }
 
 export async function fetchUsersTable(query: UsersServerQuery): Promise<UsersServerResult> {
@@ -356,34 +307,4 @@ export async function deleteUserById(id: string): Promise<void> {
   }
 
   invalidateUsersCache()
-}
-
-export async function fetchFilterOptions(
-  _kind: "companies",
-  request: FilterOptionsRequest
-): Promise<FilterOptionsResponse> {
-  const options: PageQueryOptionsInput = {
-    paginate: {
-      page: request.page + 1,
-      limit: request.pageSize,
-    },
-    sort: {
-      field: "company.name",
-      order: "ASC",
-    },
-    search: request.search.trim()
-      ? {
-          q: request.search.trim(),
-        }
-      : undefined,
-  }
-  const usersPage = await queryUsers(options)
-  const users = usersPage?.data ?? []
-  const rows = users
-  const hasMoreByMeta =
-    usersPage?.meta?.totalCount !== undefined &&
-    usersPage.meta.totalCount !== null &&
-    request.page * request.pageSize + request.pageSize < usersPage.meta.totalCount
-
-  return buildCompanyResponse(rows, hasMoreByMeta)
 }

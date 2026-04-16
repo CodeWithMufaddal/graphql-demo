@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import {
   CopyIcon,
-  ExternalLinkIcon,
   FileTextIcon,
   RefreshCwIcon,
   TablePropertiesIcon,
@@ -36,7 +34,6 @@ function getBodyPreview(body: string, maxLength = 88) {
 const defaultFilters: PostsServerFilters = {}
 
 export function PostsPage() {
-  const navigate = useNavigate()
   const [copyingRowId, setCopyingRowId] = useState<string | null>(null)
 
   const {
@@ -140,7 +137,7 @@ export function PostsPage() {
         header: "Actions",
         enableSorting: false,
         enableResizing: false,
-        size: 80,
+        size: 52,
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <Button
@@ -152,19 +149,11 @@ export function PostsPage() {
               <CopyIcon />
               <span className="sr-only">Copy post id {row.original.id}</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => navigate(`/query-studio?postId=${row.original.id}`)}
-            >
-              <ExternalLinkIcon />
-              <span className="sr-only">Open query studio for post {row.original.id}</span>
-            </Button>
           </div>
         ),
       },
     ],
-    [copyingRowId, navigate]
+    [copyingRowId]
   )
 
   const currentPage = pagination.pageIndex + 1

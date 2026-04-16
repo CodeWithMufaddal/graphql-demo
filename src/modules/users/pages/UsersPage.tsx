@@ -5,32 +5,21 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 
 import { ServerDataTable } from "@/components/data-table/server-data-table";
-import {
-  TableToolbar,
-  type TableToolbarField,
-} from "@/components/data-table/table-toolbar";
+import { TableToolbar } from "@/components/data-table/table-toolbar";
 import { Button } from "@/components/ui/button";
 import { showDialog } from "@/components/ui/global-confirmation-dialog";
 import { useDataTable } from "@/hooks/use-data-table";
 import {
   deleteUserById,
-  fetchFilterOptions,
   fetchUsersTable,
-  type FilterOptionsRequest,
   type UsersServerFilters,
   type UsersTableRow,
 } from "@/modules/users/endpoints";
 
-const defaultFilters: UsersServerFilters = {
-  companies: [],
-};
+const defaultFilters: UsersServerFilters = {};
 
 export function UsersPage() {
   const navigate = useNavigate();
-
-  const loadCompanies = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("companies", request);
-  }, []);
 
   const {
     afterDelete,
@@ -71,18 +60,6 @@ export function UsersPage() {
       }
     },
     [afterDelete],
-  );
-
-  const fields = useMemo<TableToolbarField<UsersServerFilters>[]>(
-    () => [
-      {
-        type: "asyncSelect",
-        name: "companies",
-        label: "Companies",
-        loadOptions: loadCompanies,
-      },
-    ],
-    [loadCompanies],
   );
 
   const columns = useMemo<ColumnDef<UsersTableRow>[]>(
@@ -164,7 +141,7 @@ export function UsersPage() {
         filters={filters}
         onFiltersChange={setFilters}
         onReset={resetFilters}
-        fields={fields}
+        fields={[]}
       />
 
       <ServerDataTable

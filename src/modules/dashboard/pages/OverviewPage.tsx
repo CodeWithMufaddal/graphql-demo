@@ -1,10 +1,6 @@
-import { Link } from "react-router-dom"
-import { DatabaseZapIcon, FileCode2Icon } from "lucide-react"
-
 import { DashboardSectionCard } from "@/components/dashboard/dashboard-section-card"
 import { MetricCard } from "@/components/dashboard/metric-card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -90,34 +86,6 @@ export function OverviewPage() {
         </DashboardSectionCard>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <DashboardSectionCard
-          title={
-            <span className="flex items-center gap-2">
-              <DatabaseZapIcon className="size-5" />
-              Query Studio
-            </span>
-          }
-          description="All GraphQLZero fetch operations prepared"
-        >
-            <Button asChild>
-              <Link to="/query-studio">Open Query Studio</Link>
-            </Button>
-        </DashboardSectionCard>
-        <DashboardSectionCard
-          title={
-            <span className="flex items-center gap-2">
-              <FileCode2Icon className="size-5" />
-              Mutation Studio
-            </span>
-          }
-          description="Create, update, and delete operation templates"
-        >
-            <Button asChild variant="outline">
-              <Link to="/mutation-studio">Open Mutation Studio</Link>
-            </Button>
-        </DashboardSectionCard>
-      </div>
     </div>
   )
 }

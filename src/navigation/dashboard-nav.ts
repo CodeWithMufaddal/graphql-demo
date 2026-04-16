@@ -1,11 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import {
-  CircleDollarSignIcon,
-  DatabaseZapIcon,
-  FileCode2Icon,
   FileTextIcon,
   LayoutDashboardIcon,
-  Settings2Icon,
   ShieldCheckIcon,
   UsersRoundIcon,
 } from "lucide-react"
@@ -16,7 +12,7 @@ export type DashboardNavItem = {
   description: string
   icon: LucideIcon
   badge?: string
-  group: "workspace" | "management" | "graphql"
+  group: "workspace"
 }
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -42,34 +38,6 @@ export const dashboardNavItems: DashboardNavItem[] = [
     icon: FileTextIcon,
     group: "workspace",
   },
-  {
-    path: "/billing",
-    title: "Billing",
-    description: "Invoices, usage, and plan controls",
-    icon: CircleDollarSignIcon,
-    group: "management",
-  },
-  {
-    path: "/settings",
-    title: "Settings",
-    description: "Workspace preferences and automations",
-    icon: Settings2Icon,
-    group: "management",
-  },
-  {
-    path: "/query-studio",
-    title: "Query Studio",
-    description: "GraphQLZero query templates and controls",
-    icon: DatabaseZapIcon,
-    group: "graphql",
-  },
-  {
-    path: "/mutation-studio",
-    title: "Mutation Studio",
-    description: "Create/update/delete operation templates",
-    icon: FileCode2Icon,
-    group: "graphql",
-  },
 ]
 
 export function resolveNavItem(pathname: string) {
@@ -82,14 +50,6 @@ export function resolveNavItem(pathname: string) {
 
 export const workspaceNavItems = dashboardNavItems.filter(
   (item) => item.group === "workspace"
-)
-
-export const managementNavItems = dashboardNavItems.filter(
-  (item) => item.group === "management"
-)
-
-export const graphqlNavItems = dashboardNavItems.filter(
-  (item) => item.group === "graphql"
 )
 
 export const routeHighlights = [

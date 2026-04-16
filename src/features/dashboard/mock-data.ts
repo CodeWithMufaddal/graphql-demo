@@ -42,7 +42,7 @@ export const campaigns = [
 
 export const activityFeed = [
   { actor: "Anita", action: "updated onboarding flow", time: "2m ago" },
-  { actor: "Marcus", action: "approved new billing limits", time: "18m ago" },
+  { actor: "Marcus", action: "approved new workspace limits", time: "18m ago" },
   { actor: "Priya", action: "launched user-segment campaign", time: "42m ago" },
   { actor: "Jordan", action: "reviewed QA checklist", time: "1h ago" },
   { actor: "Ari", action: "resolved 5 support tickets", time: "2h ago" },

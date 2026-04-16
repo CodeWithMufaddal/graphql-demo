@@ -5,30 +5,17 @@ import { resolveNavItem } from "@/navigation/dashboard-nav"
 import { RequireAuth } from "@/routes/RequireAuth"
 
 const loadAdminLayoutModule = () => import("@/layouts/AdminLayout")
-const loadBillingModule = () => import("@/modules/billing")
 const loadAuthModule = () => import("@/modules/auth")
-const loadStudioModule = () => import("@/modules/studio")
 const loadSystemModule = () => import("@/modules/system")
 const loadDashboardModule = () => import("@/modules/dashboard")
-const loadSettingsModule = () => import("@/modules/settings")
 const loadUsersModule = () => import("@/modules/users")
 const loadPostsModule = () => import("@/modules/posts")
 
 const AdminLayout = lazy(() =>
   loadAdminLayoutModule().then((module) => ({ default: module.AdminLayout }))
 )
-const BillingPage = lazy(() =>
-  loadBillingModule().then((module) => ({
-    default: module.BillingPage,
-  }))
-)
 const LoginPage = lazy(() =>
   loadAuthModule().then((module) => ({ default: module.LoginPage }))
-)
-const MutationStudioPage = lazy(() =>
-  loadStudioModule().then((module) => ({
-    default: module.MutationStudioPage,
-  }))
 )
 const NotFoundPage = lazy(() =>
   loadSystemModule().then((module) => ({
@@ -38,16 +25,6 @@ const NotFoundPage = lazy(() =>
 const OverviewPage = lazy(() =>
   loadDashboardModule().then((module) => ({
     default: module.OverviewPage,
-  }))
-)
-const QueryStudioPage = lazy(() =>
-  loadStudioModule().then((module) => ({
-    default: module.QueryStudioPage,
-  }))
-)
-const SettingsPage = lazy(() =>
-  loadSettingsModule().then((module) => ({
-    default: module.SettingsPage,
   }))
 )
 const UsersPage = lazy(() =>
@@ -80,21 +57,6 @@ function preloadCurrentRouteModules(pathname: string) {
 
   if (pathname.startsWith("/posts")) {
     void loadPostsModule()
-    return
-  }
-
-  if (pathname === "/billing") {
-    void loadBillingModule()
-    return
-  }
-
-  if (pathname === "/settings") {
-    void loadSettingsModule()
-    return
-  }
-
-  if (pathname === "/query-studio" || pathname === "/mutation-studio") {
-    void loadStudioModule()
     return
   }
 
@@ -209,10 +171,6 @@ function App() {
             <Route path="/users/new" element={<UserEditorPage />} />
             <Route path="/users/:id/edit" element={<UserEditorPage />} />
             <Route path="/posts" element={<PostsPage />} />
-            <Route path="/billing" element={<BillingPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/query-studio" element={<QueryStudioPage />} />
-            <Route path="/mutation-studio" element={<MutationStudioPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

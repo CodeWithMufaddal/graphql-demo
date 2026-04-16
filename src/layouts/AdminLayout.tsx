@@ -57,8 +57,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/providers/AuthProvider"
 import { useTheme } from "@/providers/ThemeProvider"
 import {
-  graphqlNavItems,
-  managementNavItems,
   resolveNavItem,
   workspaceNavItems,
 } from "@/navigation/dashboard-nav"
@@ -134,10 +132,6 @@ export function AdminLayout() {
         <SidebarContent>
           <nav aria-label="Primary">
             <NavigationGroup title="Workspace" items={workspaceNavItems} pathname={pathname} />
-            <SidebarSeparator />
-            <NavigationGroup title="Management" items={managementNavItems} pathname={pathname} />
-            <SidebarSeparator />
-            <NavigationGroup title="GraphQL Studio" items={graphqlNavItems} pathname={pathname} />
             <SidebarSeparator />
             <SidebarGroup>
               <SidebarGroupLabel>System</SidebarGroupLabel>
@@ -245,10 +239,7 @@ export function AdminLayout() {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuGroup>
                     <DropdownMenuItem>View profile</DropdownMenuItem>
-                    <DropdownMenuItem>Notification settings</DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings">Theme & appearance</Link>
-                    </DropdownMenuItem>
+                    <DropdownMenuItem>Notifications</DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
