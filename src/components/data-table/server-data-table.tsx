@@ -108,11 +108,11 @@ export function ServerDataTable<TData>({
     const contentDigits = rowSelectionEnabled
       ? Math.max(indexDigits, selectedDigits)
       : indexDigits
-    const digitWidth = 6
+    const digitWidth = 10
     const indexWidth = Math.max(2, contentDigits) * digitWidth
-    const horizontalPadding = 8
-    const checkboxAndGap = rowSelectionEnabled ? 14 : 0
-    const minWidth = rowSelectionEnabled ? 40 : 16
+    const horizontalPadding = 12
+    const checkboxAndGap = rowSelectionEnabled ? 18 : 0
+    const minWidth = rowSelectionEnabled ? 42 : 16
 
     return Math.max(minWidth, indexWidth + horizontalPadding + checkboxAndGap)
   }, [indexDigits, rowSelectionEnabled, selectedCount])
