@@ -33,7 +33,7 @@ const defaultOptions: ApolloClient.DefaultOptions = {
     errorPolicy: 'all',
   },
   query: {
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-first',
     errorPolicy: 'all',
   },
   mutate: {

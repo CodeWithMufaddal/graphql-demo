@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   CopyIcon,
@@ -20,9 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDataTable } from "@/hooks/use-data-table"
 import {
-  fetchPostAuthorOptions,
   fetchPostsTable,
-  type FilterOptionsRequest,
   type PostsServerFilters,
   type PostsTableRow,
 } from "@/modules/posts/endpoints"
@@ -35,18 +33,11 @@ function getBodyPreview(body: string, maxLength = 88) {
   return `${body.slice(0, maxLength).trimEnd()}...`
 }
 
-const defaultFilters: PostsServerFilters = {
-  authors: [],
-  authorStates: [],
-}
+const defaultFilters: PostsServerFilters = {}
 
 export function PostsPage() {
   const navigate = useNavigate()
   const [copyingRowId, setCopyingRowId] = useState<string | null>(null)
-
-  const loadAuthors = useCallback((request: FilterOptionsRequest) => {
-    return fetchPostAuthorOptions(request)
-  }, [])
 
   const {
     rows,
@@ -103,30 +94,8 @@ export function PostsPage() {
   }
 
   const fields = useMemo<TableToolbarField<PostsServerFilters>[]>(
-    () => [
-      {
-        type: "asyncSelect",
-        name: "authors",
-        label: "Authors",
-        loadOptions: loadAuthors,
-      },
-      {
-        type: "select",
-        name: "authorStates",
-        label: "Author state",
-        options: [
-          {
-            label: "Known",
-            value: "Known",
-          },
-          {
-            label: "Unknown",
-            value: "Unknown",
-          },
-        ],
-      },
-    ],
-    [loadAuthors]
+    () => [],
+    []
   )
 
   const columns = useMemo<ColumnDef<PostsTableRow>[]>(

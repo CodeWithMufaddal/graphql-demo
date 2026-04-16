@@ -9,7 +9,6 @@ import {
   TableToolbar,
   type TableToolbarField,
 } from "@/components/data-table/table-toolbar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { showDialog } from "@/components/ui/global-confirmation-dialog";
 import { useDataTable } from "@/hooks/use-data-table";
@@ -21,26 +20,13 @@ import {
   type UsersServerFilters,
   type UsersTableRow,
 } from "@/modules/users/endpoints";
-import { statusVariant } from "@/features/dashboard/ui-utils";
 
 const defaultFilters: UsersServerFilters = {
-  roles: [],
-  statuses: [],
   companies: [],
-  createdFrom: "",
-  createdTo: "",
 };
 
 export function UsersPage() {
   const navigate = useNavigate();
-
-  const loadRoles = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("roles", request);
-  }, []);
-
-  const loadStatuses = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("statuses", request);
-  }, []);
 
   const loadCompanies = useCallback((request: FilterOptionsRequest) => {
     return fetchFilterOptions("companies", request);
@@ -91,31 +77,12 @@ export function UsersPage() {
     () => [
       {
         type: "asyncSelect",
-        name: "roles",
-        label: "Roles",
-        loadOptions: loadRoles,
-      },
-      {
-        type: "asyncSelect",
-        name: "statuses",
-        label: "Statuses",
-        loadOptions: loadStatuses,
-      },
-      {
-        type: "asyncSelect",
         name: "companies",
         label: "Companies",
         loadOptions: loadCompanies,
       },
-      {
-        type: "dateRange",
-        name: "createdAt",
-        label: "Created date",
-        fromKey: "createdFrom",
-        toKey: "createdTo",
-      },
     ],
-    [loadCompanies, loadRoles, loadStatuses],
+    [loadCompanies],
   );
 
   const columns = useMemo<ColumnDef<UsersTableRow>[]>(
@@ -141,22 +108,12 @@ export function UsersPage() {
         header: "Company",
       },
       {
-        accessorKey: "role",
-        header: "Role",
-        cell: ({ row }) => <Badge variant="outline">{row.original.role}</Badge>,
+        accessorKey: "phone",
+        header: "Phone",
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => (
-          <Badge variant={statusVariant(row.original.status)}>
-            {row.original.status}
-          </Badge>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Created",
+        accessorKey: "website",
+        header: "Website",
       },
       {
         id: "actions",

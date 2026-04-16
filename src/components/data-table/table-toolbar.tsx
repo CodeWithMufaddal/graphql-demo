@@ -143,7 +143,7 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
   return (
     <div className="rounded-lg border bg-card p-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[14rem] flex-1">
+        <div className="relative w-full min-w-[14rem] md:w-[22rem] md:flex-none">
           <SearchIcon className="pointer-events-none absolute top-2 left-2.5 size-4 text-muted-foreground" />
           <Input
             value={globalSearchInput}
@@ -154,52 +154,72 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
           />
         </div>
 
-        {fields.map((field) => {
-          if (field.type === "dateRange") {
-            const fromKey = field.fromKey ?? `${field.name}From`
-            const toKey = field.toKey ?? `${field.name}To`
-            const selectedRange: DateRange | undefined =
-              readString(filters[fromKey]) || readString(filters[toKey])
-                ? {
-                    from: parseFilterDate(readString(filters[fromKey])),
-                    to: parseFilterDate(readString(filters[toKey])),
-                  }
-                : undefined
-
-            return (
-              <Popover key={`${field.type}:${field.name}`}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={field.className ?? dateRangeFieldClassName}
-                  >
-                    <CalendarDaysIcon data-icon="inline-start" />
-                    <span className="truncate">
-                      {formatDateFilterLabel(field.label, selectedRange)}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    numberOfMonths={2}
-                    selected={selectedRange}
-                    onSelect={(nextRange) =>
-                      onFiltersChange((previous) => ({
-                        ...previous,
-                        [fromKey]: nextRange?.from ? format(nextRange.from, "yyyy-MM-dd") : "",
-                        [toKey]: nextRange?.to ? format(nextRange.to, "yyyy-MM-dd") : "",
-                      }))
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 md:ml-auto md:w-auto">
+          {fields.map((field) => {
+            if (field.type === "dateRange") {
+              const fromKey = field.fromKey ?? `${field.name}From`
+              const toKey = field.toKey ?? `${field.name}To`
+              const selectedRange: DateRange | undefined =
+                readString(filters[fromKey]) || readString(filters[toKey])
+                  ? {
+                      from: parseFilterDate(readString(filters[fromKey])),
+                      to: parseFilterDate(readString(filters[toKey])),
                     }
-                    defaultMonth={selectedRange?.from}
-                  />
-                </PopoverContent>
-              </Popover>
-            )
-          }
+                  : undefined
 
-          if (field.type === "select") {
-            const selectedLabelMap = getSelectedLabelMap(field.options)
+              return (
+                <Popover key={`${field.type}:${field.name}`}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={field.className ?? dateRangeFieldClassName}
+                    >
+                      <CalendarDaysIcon data-icon="inline-start" />
+                      <span className="truncate">
+                        {formatDateFilterLabel(field.label, selectedRange)}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      numberOfMonths={2}
+                      selected={selectedRange}
+                      onSelect={(nextRange) =>
+                        onFiltersChange((previous) => ({
+                          ...previous,
+                          [fromKey]: nextRange?.from ? format(nextRange.from, "yyyy-MM-dd") : "",
+                          [toKey]: nextRange?.to ? format(nextRange.to, "yyyy-MM-dd") : "",
+                        }))
+                      }
+                      defaultMonth={selectedRange?.from}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )
+            }
+
+            if (field.type === "select") {
+              const selectedLabelMap = getSelectedLabelMap(field.options)
+
+              return (
+                <AsyncMultiSelect
+                  key={`${field.type}:${field.name}`}
+                  label={field.label}
+                  placeholder={field.placeholder}
+                  selected={readStringArray(filters[field.name])}
+                  selectedLabelMap={selectedLabelMap}
+                  className={field.className ?? filterFieldClassName}
+                  loadOptions={(request) => loadStaticOptions(field.options, request)}
+                  onChange={(nextSelected) =>
+                    onFiltersChange((previous) => ({
+                      ...previous,
+                      [field.name]: nextSelected,
+                    }))
+                  }
+                />
+              )
+            }
 
             return (
               <AsyncMultiSelect
@@ -207,9 +227,8 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
                 label={field.label}
                 placeholder={field.placeholder}
                 selected={readStringArray(filters[field.name])}
-                selectedLabelMap={selectedLabelMap}
                 className={field.className ?? filterFieldClassName}
-                loadOptions={(request) => loadStaticOptions(field.options, request)}
+                loadOptions={field.loadOptions}
                 onChange={(nextSelected) =>
                   onFiltersChange((previous) => ({
                     ...previous,
@@ -218,30 +237,18 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
                 }
               />
             )
-          }
+          })}
 
-          return (
-            <AsyncMultiSelect
-              key={`${field.type}:${field.name}`}
-              label={field.label}
-              placeholder={field.placeholder}
-              selected={readStringArray(filters[field.name])}
-              className={field.className ?? filterFieldClassName}
-              loadOptions={field.loadOptions}
-              onChange={(nextSelected) =>
-                onFiltersChange((previous) => ({
-                  ...previous,
-                  [field.name]: nextSelected,
-                }))
-              }
-            />
-          )
-        })}
-
-        <Button variant="outline" size="sm" onClick={onReset} className="h-9 px-3">
-          <RotateCcwIcon data-icon="inline-start" />
-          Reset
-        </Button>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={onReset}
+            aria-label="Reset filters"
+            title="Reset filters"
+          >
+            <RotateCcwIcon data-icon="inline-start" />
+          </Button>
+        </div>
       </div>
     </div>
   )
