@@ -1,27 +1,18 @@
-import { useCallback, useMemo, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import {
-  PencilIcon,
-  PlusIcon,
-  TablePropertiesIcon,
-  Trash2Icon,
-  UsersRoundIcon,
-} from "lucide-react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { toast } from "sonner"
+import { useCallback, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 
-import { MetricCard } from "@/components/dashboard/metric-card"
-import { ServerDataTable } from "@/components/data-table/server-data-table"
+import { ServerDataTable } from "@/components/data-table/server-data-table";
 import {
   TableToolbar,
   type TableToolbarField,
-} from "@/components/data-table/table-toolbar"
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { useDataTable } from "@/hooks/use-data-table"
+} from "@/components/data-table/table-toolbar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { showDialog } from "@/components/ui/global-confirmation-dialog";
+import { useDataTable } from "@/hooks/use-data-table";
 import {
   deleteUserById,
   fetchFilterOptions,
@@ -29,8 +20,8 @@ import {
   type FilterOptionsRequest,
   type UsersServerFilters,
   type UsersTableRow,
-} from "@/modules/users/endpoints"
-import { statusVariant } from "@/features/dashboard/ui-utils"
+} from "@/modules/users/endpoints";
+import { statusVariant } from "@/features/dashboard/ui-utils";
 
 const defaultFilters: UsersServerFilters = {
   roles: [],
@@ -38,85 +29,63 @@ const defaultFilters: UsersServerFilters = {
   companies: [],
   createdFrom: "",
   createdTo: "",
-}
+};
 
 export function UsersPage() {
-  const navigate = useNavigate()
-  const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null)
+  const navigate = useNavigate();
 
   const loadRoles = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("roles", request)
-  }, [])
+    return fetchFilterOptions("roles", request);
+  }, []);
 
   const loadStatuses = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("statuses", request)
-  }, [])
+    return fetchFilterOptions("statuses", request);
+  }, []);
 
   const loadCompanies = useCallback((request: FilterOptionsRequest) => {
-    return fetchFilterOptions("companies", request)
-  }, [])
+    return fetchFilterOptions("companies", request);
+  }, []);
 
   const {
-    rows,
-    totalCount,
-    isLoading,
-    isRefetching,
-    error,
-    pagination,
-    setPagination,
-    sorting,
-    setSorting,
-    rowSelection,
-    setRowSelection,
-    columnSizing,
-    setColumnSizing,
-    columnPinning,
-    setColumnPinning,
+    afterDelete,
+    serverDataTableProps,
     globalSearchInput,
     setGlobalSearchInput,
     filters,
     setFilters,
     resetFilters,
-    refresh,
   } = useDataTable<UsersTableRow, UsersServerFilters>({
     fetchData: fetchUsersTable,
     defaultFilters,
-    initialSorting: [
-      {
-        id: "createdAt",
-        desc: true,
-      },
-    ],
-    initialColumnPinning: {
-      left: ["select", "name"],
-      right: ["actions"],
-    },
     loadingErrorMessage: "Unable to load users table data.",
-  })
+  });
 
-  const selectedCount = Object.values(rowSelection).filter(Boolean).length
+  const handleDeleteUser = useCallback(
+    async (target: UsersTableRow) => {
+      const confirmed = await showDialog({
+        title: "Delete user",
+        description: `Are you sure you want to delete ${target.name}? This action cannot be undone.`,
+        confirmLabel: "Delete",
+        confirmingLabel: "Deleting...",
+        confirmVariant: "destructive",
+      });
 
-  async function handleDeleteConfirm() {
-    if (!deleteTarget) {
-      return false
-    }
+      if (!confirmed) return false;
 
-    try {
-      await deleteUserById(deleteTarget.id)
-      toast.success(`Deleted ${deleteTarget.name}.`)
-      setRowSelection((previous) => {
-        const next = { ...previous }
-        delete next[deleteTarget.id]
-        return next
-      })
-      refresh()
-      return true
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to delete user."
-      toast.error(message)
-      return false
-    }
-  }
+      try {
+        await deleteUserById(target.id);
+        toast.success(`Deleted ${target.name}.`);
+        afterDelete(target.id);
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to delete user.";
+        toast.error(message);
+        return false;
+      }
+    },
+    [afterDelete],
+  );
 
   const fields = useMemo<TableToolbarField<UsersServerFilters>[]>(
     () => [
@@ -125,21 +94,18 @@ export function UsersPage() {
         name: "roles",
         label: "Roles",
         loadOptions: loadRoles,
-        className: "h-9 min-w-[8.25rem] px-2",
       },
       {
         type: "asyncSelect",
         name: "statuses",
         label: "Statuses",
         loadOptions: loadStatuses,
-        className: "h-9 min-w-[8.75rem] px-2",
       },
       {
         type: "asyncSelect",
         name: "companies",
         label: "Companies",
         loadOptions: loadCompanies,
-        className: "h-9 min-w-[9rem] px-2",
       },
       {
         type: "dateRange",
@@ -149,49 +115,20 @@ export function UsersPage() {
         toKey: "createdTo",
       },
     ],
-    [loadCompanies, loadRoles, loadStatuses]
-  )
+    [loadCompanies, loadRoles, loadStatuses],
+  );
 
   const columns = useMemo<ColumnDef<UsersTableRow>[]>(
     () => [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={
-                table.getIsAllPageRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && "indeterminate")
-              }
-              onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
-              aria-label="Select all rows on page"
-            />
-            <span className="text-xs text-muted-foreground">#</span>
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-              aria-label={`Select row ${row.original.id}`}
-            />
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {pagination.pageIndex * pagination.pageSize + row.index + 1}
-            </span>
-          </div>
-        ),
-        enableSorting: false,
-        enableResizing: false,
-        size: 88,
-      },
       {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => (
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.name}</span>
-            <span className="truncate text-xs text-muted-foreground">@{row.original.username}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              @{row.original.username}
+            </span>
           </div>
         ),
       },
@@ -212,7 +149,9 @@ export function UsersPage() {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
-          <Badge variant={statusVariant(row.original.status)}>{row.original.status}</Badge>
+          <Badge variant={statusVariant(row.original.status)}>
+            {row.original.status}
+          </Badge>
         ),
       },
       {
@@ -238,7 +177,7 @@ export function UsersPage() {
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => setDeleteTarget(row.original)}
+              onClick={() => void handleDeleteUser(row.original)}
             >
               <Trash2Icon />
               <span className="sr-only">Delete row {row.original.id}</span>
@@ -247,24 +186,11 @@ export function UsersPage() {
         ),
       },
     ],
-    [navigate, pagination.pageIndex, pagination.pageSize]
-  )
+    [handleDeleteUser, navigate],
+  );
 
   return (
     <div className="grid min-w-0 gap-4">
-      <div className="grid min-w-0 gap-4 md:grid-cols-3">
-        <MetricCard
-          label="Total records"
-          value={totalCount}
-          icon={<UsersRoundIcon className="text-muted-foreground" />}
-        />
-        <MetricCard
-          label="Selected rows"
-          value={selectedCount}
-          icon={<TablePropertiesIcon className="text-muted-foreground" />}
-        />
-      </div>
-
       <div className="flex justify-end">
         <Button asChild>
           <Link to="/users/new">
@@ -284,52 +210,11 @@ export function UsersPage() {
         fields={fields}
       />
 
-      {error ? (
-        <Card>
-          <CardContent className="py-4 text-sm text-destructive">{error}</CardContent>
-        </Card>
-      ) : null}
-
       <ServerDataTable
         columns={columns}
-        data={rows}
-        totalCount={totalCount}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        sorting={sorting}
-        onSortingChange={setSorting}
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-        columnPinning={columnPinning}
-        onColumnPinningChange={setColumnPinning}
-        columnSizing={columnSizing}
-        onColumnSizingChange={setColumnSizing}
-        isLoading={isLoading}
-        isRefetching={isRefetching}
+        {...serverDataTableProps}
         getRowId={(row) => row.id}
       />
-
-      <p className="text-xs text-muted-foreground">
-        Multi-sort is enabled: click a column header, then Shift+click additional columns.
-      </p>
-
-      <ConfirmationDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null)
-          }
-        }}
-        title="Delete user"
-        description={
-          deleteTarget
-            ? `Are you sure you want to delete ${deleteTarget.name}? This action cannot be undone.`
-            : "Are you sure you want to delete this user?"
-        }
-        confirmLabel="Delete"
-        confirmingLabel="Deleting..."
-        onConfirm={handleDeleteConfirm}
-      />
     </div>
-  )
+  );
 }

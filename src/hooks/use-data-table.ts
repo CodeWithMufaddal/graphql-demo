@@ -25,6 +25,27 @@ export type DataTableResult<TRow> = {
   totalCount: number
 }
 
+export type ServerTableState = {
+  pagination: PaginationState
+  onPaginationChange: OnChangeFn<PaginationState>
+  sorting: SortingState
+  onSortingChange: OnChangeFn<SortingState>
+  rowSelection: RowSelectionState
+  onRowSelectionChange: OnChangeFn<RowSelectionState>
+  columnPinning: ColumnPinningState
+  onColumnPinningChange: OnChangeFn<ColumnPinningState>
+  columnSizing: ColumnSizingState
+  onColumnSizingChange: OnChangeFn<ColumnSizingState>
+  isLoading: boolean
+  isRefetching: boolean
+}
+
+export type ServerDataTableProps<TRow> = {
+  rows: TRow[]
+  totalCount: number
+  error: string | null
+} & ServerTableState
+
 type UseDataTableOptions<TRow, TFilters> = {
   fetchData: (query: DataTableQuery<TFilters>) => Promise<DataTableResult<TRow>>
   defaultFilters: TFilters
@@ -176,6 +197,63 @@ export function useDataTable<TRow, TFilters>({
     setRefreshNonce((previous) => previous + 1)
   }, [])
 
+  const clearRowSelectionById = useCallback((rowId: string) => {
+    setRowSelection((previous) => {
+      if (!(rowId in previous)) {
+        return previous
+      }
+
+      const next = { ...previous }
+      delete next[rowId]
+      return next
+    })
+  }, [])
+
+  const afterDelete = useCallback(
+    (rowId: string) => {
+      clearRowSelectionById(rowId)
+      refresh()
+    },
+    [clearRowSelectionById, refresh]
+  )
+
+  const serverTableState = useMemo<ServerTableState>(
+    () => ({
+      pagination,
+      onPaginationChange: setPagination,
+      sorting,
+      onSortingChange: setSortingAndResetPage,
+      rowSelection,
+      onRowSelectionChange: setRowSelection,
+      columnPinning,
+      onColumnPinningChange: setColumnPinning,
+      columnSizing,
+      onColumnSizingChange: setColumnSizing,
+      isLoading,
+      isRefetching,
+    }),
+    [
+      pagination,
+      sorting,
+      rowSelection,
+      columnPinning,
+      columnSizing,
+      isLoading,
+      isRefetching,
+      setSortingAndResetPage,
+    ]
+  )
+
+  const serverDataTableProps = useMemo<ServerDataTableProps<TRow>>(
+    () => ({
+      rows,
+      totalCount,
+      error,
+      ...serverTableState,
+    }),
+    [rows, totalCount, error, serverTableState]
+  )
+
   return {
     rows,
     totalCount,
@@ -198,5 +276,9 @@ export function useDataTable<TRow, TFilters>({
     setFilters,
     resetFilters,
     refresh,
+    clearRowSelectionById,
+    afterDelete,
+    serverTableState,
+    serverDataTableProps,
   }
 }

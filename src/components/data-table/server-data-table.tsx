@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react"
+import { useMemo, type CSSProperties } from "react"
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from "lucide-react"
 import {
   type ColumnDef,
@@ -13,6 +13,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 
+import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -33,22 +34,26 @@ import {
 
 type ServerDataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[]
-  data: TData[]
+  rows?: TData[]
+  data?: TData[]
   totalCount: number
   pagination: PaginationState
   onPaginationChange: OnChangeFn<PaginationState>
   sorting: SortingState
   onSortingChange: OnChangeFn<SortingState>
-  rowSelection: RowSelectionState
-  onRowSelectionChange: OnChangeFn<RowSelectionState>
+  rowSelection?: RowSelectionState
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>
   columnPinning: ColumnPinningState
   onColumnPinningChange: OnChangeFn<ColumnPinningState>
   columnSizing: ColumnSizingState
   onColumnSizingChange: OnChangeFn<ColumnSizingState>
   isLoading?: boolean
   isRefetching?: boolean
+  error?: string | null
   getRowId?: (row: TData, index: number) => string
 }
+
+const emptyRowSelectionState: RowSelectionState = {}
 
 function getSortIcon(direction: false | "asc" | "desc") {
   if (direction === "asc") {
@@ -64,6 +69,7 @@ function getSortIcon(direction: false | "asc" | "desc") {
 
 export function ServerDataTable<TData>({
   columns,
+  rows,
   data,
   totalCount,
   pagination,
@@ -78,28 +84,123 @@ export function ServerDataTable<TData>({
   onColumnSizingChange,
   isLoading = false,
   isRefetching = false,
+  error = null,
   getRowId,
 }: ServerDataTableProps<TData>) {
+  const tableRows = rows ?? data ?? []
+  const rowMetaColumnId = "__rowMeta"
+  const rowSelectionState = useMemo(
+    () => rowSelection ?? emptyRowSelectionState,
+    [rowSelection]
+  )
+  const rowSelectionEnabled = Boolean(onRowSelectionChange)
+  const maxVisibleIndex = pagination.pageIndex * pagination.pageSize + tableRows.length
+  const maxIndexValue = Math.max(1, totalCount, maxVisibleIndex)
+  const indexDigits = String(maxIndexValue).length
+
+  const selectedCount = useMemo(
+    () => Object.values(rowSelectionState).filter(Boolean).length,
+    [rowSelectionState]
+  )
+
+  const rowMetaColumnSize = useMemo(() => {
+    const selectedDigits = String(Math.max(1, selectedCount)).length
+    const contentDigits = rowSelectionEnabled
+      ? Math.max(indexDigits, selectedDigits)
+      : indexDigits
+    const digitWidth = 6
+    const indexWidth = Math.max(2, contentDigits) * digitWidth
+    const horizontalPadding = 8
+    const checkboxAndGap = rowSelectionEnabled ? 14 : 0
+    const minWidth = rowSelectionEnabled ? 40 : 16
+
+    return Math.max(minWidth, indexWidth + horizontalPadding + checkboxAndGap)
+  }, [indexDigits, rowSelectionEnabled, selectedCount])
+
+  const resolvedColumnPinning = useMemo<ColumnPinningState>(() => {
+    const left = (columnPinning.left ?? []).filter((id) => id !== rowMetaColumnId)
+
+    return {
+      ...columnPinning,
+      left: [rowMetaColumnId, ...left],
+    }
+  }, [columnPinning])
+
+  const resolvedColumns = useMemo<ColumnDef<TData, unknown>[]>(
+    () => [
+      {
+        id: rowMetaColumnId,
+        header: ({ table }) => (
+          <div className="flex items-center gap-2">
+            {rowSelectionEnabled ? (
+              <Checkbox
+                checked={
+                  table.getIsAllPageRowsSelected() ||
+                  (table.getIsSomePageRowsSelected() && "indeterminate")
+                }
+                onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
+                aria-label="Select all rows on page"
+              />
+            ) : null}
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {rowSelectionEnabled && selectedCount > 0 ? selectedCount : "#"}
+            </span>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            {rowSelectionEnabled ? (
+              <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+                aria-label={`Select row ${row.id}`}
+              />
+            ) : null}
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {pagination.pageIndex * pagination.pageSize + row.index + 1}
+            </span>
+          </div>
+        ),
+        enableSorting: false,
+        enableResizing: false,
+        size: rowMetaColumnSize,
+        minSize: rowMetaColumnSize,
+        maxSize: rowMetaColumnSize,
+      },
+      ...columns,
+    ],
+    [
+      columns,
+      pagination.pageIndex,
+      pagination.pageSize,
+      rowSelectionEnabled,
+      rowMetaColumnSize,
+      selectedCount,
+      rowMetaColumnId,
+    ]
+  )
+
   const pageCount = Math.max(1, Math.ceil(totalCount / pagination.pageSize))
 
   const table = useReactTable({
-    data,
-    columns,
+    data: tableRows,
+    columns: resolvedColumns,
     state: {
       pagination,
       sorting,
-      rowSelection,
-      columnPinning,
+      rowSelection: rowSelectionState,
+      columnPinning: resolvedColumnPinning,
       columnSizing,
     },
     getRowId,
     manualPagination: true,
     manualSorting: true,
     enableMultiSort: true,
+    enableRowSelection: rowSelectionEnabled,
     columnResizeMode: "onChange",
     onPaginationChange,
     onSortingChange,
-    onRowSelectionChange,
+    onRowSelectionChange: rowSelectionEnabled ? onRowSelectionChange : undefined,
     onColumnPinningChange,
     onColumnSizingChange,
     pageCount,
@@ -111,6 +212,12 @@ export function ServerDataTable<TData>({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
+
       <div className="relative max-w-full min-w-0 overflow-hidden rounded-lg border bg-card">
         <div className="max-w-full min-w-0">
           <Table
@@ -233,7 +340,10 @@ export function ServerDataTable<TData>({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={table.getVisibleFlatColumns().length}
+                    className="h-24 text-center text-muted-foreground"
+                  >
                     {isLoading ? "Loading rows..." : "No rows found."}
                   </TableCell>
                 </TableRow>

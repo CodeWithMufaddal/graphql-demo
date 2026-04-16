@@ -1,7 +1,20 @@
-import type { SortingState } from "@tanstack/react-table"
-
+import type { DataTableQuery, DataTableResult } from "@/hooks/use-data-table"
+import {
+  buildFilterOptions,
+  compareText,
+  delay,
+  resolveTableQuery,
+  type FilterOptionsRequest,
+  type FilterOptionsResponse,
+} from "@/lib/data-table/local-table-workflow"
 import { GET_USERS_QUERY, type UserDirectoryRow } from "@/modules/users/graphql"
 import { apolloClient } from "@/lib/apollo/client"
+
+export type {
+  FilterOption,
+  FilterOptionsRequest,
+  FilterOptionsResponse,
+} from "@/lib/data-table/local-table-workflow"
 
 export type UserStatus = "Active" | "Invited" | "Suspended"
 export type UserRole = "Admin" | "Manager" | "Analyst" | "Support"
@@ -70,34 +83,9 @@ export type UsersServerFilters = {
   createdTo: string
 }
 
-export type UsersServerQuery = {
-  pageIndex: number
-  pageSize: number
-  sorting: SortingState
-  globalSearch: string
-  filters: UsersServerFilters
-}
+export type UsersServerQuery = DataTableQuery<UsersServerFilters>
 
-export type UsersServerResult = {
-  rows: UsersTableRow[]
-  totalCount: number
-}
-
-export type FilterOption = {
-  label: string
-  value: string
-}
-
-export type FilterOptionsRequest = {
-  search: string
-  page: number
-  pageSize: number
-}
-
-export type FilterOptionsResponse = {
-  options: FilterOption[]
-  hasMore: boolean
-}
+export type UsersServerResult = DataTableResult<UsersTableRow>
 
 const roles: UserRole[] = ["Admin", "Manager", "Analyst", "Support"]
 const statuses: UserStatus[] = ["Active", "Invited", "Suspended"]
@@ -115,15 +103,6 @@ const seedSuffixes = [
 ]
 
 let usersDatasetCache: UserRecord[] | null = null
-
-function compareValues(a: string, b: string, desc: boolean) {
-  const left = a.toLowerCase()
-  const right = b.toLowerCase()
-
-  if (left === right) return 0
-  const result = left > right ? 1 : -1
-  return desc ? -result : result
-}
 
 function normalizeOptionalString(value: string | undefined) {
   if (!value) {
@@ -196,102 +175,6 @@ function toTableRow(record: UserRecord): UsersTableRow {
     status: record.status,
     createdAt: record.createdAt,
   }
-}
-
-function applySorting(rows: UserRecord[], sorting: SortingState) {
-  if (sorting.length === 0) {
-    return rows
-  }
-
-  const sorted = [...rows]
-  sorted.sort((left, right) => {
-    for (const sort of sorting) {
-      const { id, desc } = sort
-
-      if (id === "createdAt") {
-        const leftDate = new Date(left.createdAt).getTime()
-        const rightDate = new Date(right.createdAt).getTime()
-
-        if (leftDate !== rightDate) {
-          return desc ? rightDate - leftDate : leftDate - rightDate
-        }
-        continue
-      }
-
-      if (id === "company") {
-        const comparison = compareValues(getCompanyName(left), getCompanyName(right), desc)
-        if (comparison !== 0) {
-          return comparison
-        }
-        continue
-      }
-
-      const leftValue = String(left[id as keyof UserRecord] ?? "")
-      const rightValue = String(right[id as keyof UserRecord] ?? "")
-      const comparison = compareValues(leftValue, rightValue, desc)
-
-      if (comparison !== 0) {
-        return comparison
-      }
-    }
-
-    return 0
-  })
-
-  return sorted
-}
-
-function applySearch(rows: UserRecord[], query: string) {
-  const normalizedQuery = query.trim().toLowerCase()
-
-  if (!normalizedQuery) {
-    return rows
-  }
-
-  return rows.filter((row) => {
-    const haystack =
-      `${row.name} ${row.username} ${row.email} ${getCompanyName(row)}`.toLowerCase()
-    return haystack.includes(normalizedQuery)
-  })
-}
-
-function applyFilters(rows: UserRecord[], filters: UsersServerFilters) {
-  return rows.filter((row) => {
-    if (filters.roles.length > 0 && !filters.roles.includes(row.role)) {
-      return false
-    }
-
-    if (filters.statuses.length > 0 && !filters.statuses.includes(row.status)) {
-      return false
-    }
-
-    if (filters.companies.length > 0 && !filters.companies.includes(getCompanyName(row))) {
-      return false
-    }
-
-    if (filters.createdFrom) {
-      const from = new Date(filters.createdFrom).getTime()
-      const rowDate = new Date(row.createdAt).getTime()
-      if (rowDate < from) {
-        return false
-      }
-    }
-
-    if (filters.createdTo) {
-      const to = new Date(filters.createdTo).getTime()
-      const rowDate = new Date(row.createdAt).getTime()
-      if (rowDate > to) {
-        return false
-      }
-    }
-
-    return true
-  })
-}
-
-function paginateRows(rows: UserRecord[], pageIndex: number, pageSize: number) {
-  const start = pageIndex * pageSize
-  return rows.slice(start, start + pageSize)
 }
 
 function parseNumber(value: string | null | undefined) {
@@ -386,30 +269,70 @@ function generateUserId() {
   return `local-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
 }
 
-function simulateLatency(delay = 280) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, delay)
-  })
-}
-
 export async function fetchUsersTable(query: UsersServerQuery): Promise<UsersServerResult> {
   const source = await loadUsersDataset()
-  await simulateLatency()
+  await delay(280)
 
-  const searched = applySearch(source, query.globalSearch)
-  const filtered = applyFilters(searched, query.filters)
-  const sorted = applySorting(filtered, query.sorting)
-  const rows = paginateRows(sorted, query.pageIndex, query.pageSize).map(toTableRow)
+  const { rows, totalCount } = resolveTableQuery({
+    rows: source,
+    query,
+    toSearchText: (row) => `${row.name} ${row.username} ${row.email} ${getCompanyName(row)}`,
+    matchesFilters: (row, filters) => {
+      if (filters.roles.length > 0 && !filters.roles.includes(row.role)) {
+        return false
+      }
+
+      if (filters.statuses.length > 0 && !filters.statuses.includes(row.status)) {
+        return false
+      }
+
+      if (filters.companies.length > 0 && !filters.companies.includes(getCompanyName(row))) {
+        return false
+      }
+
+      if (filters.createdFrom) {
+        const from = new Date(filters.createdFrom).getTime()
+        const rowDate = new Date(row.createdAt).getTime()
+        if (rowDate < from) {
+          return false
+        }
+      }
+
+      if (filters.createdTo) {
+        const to = new Date(filters.createdTo).getTime()
+        const rowDate = new Date(row.createdAt).getTime()
+        if (rowDate > to) {
+          return false
+        }
+      }
+
+      return true
+    },
+    sortComparators: {
+      createdAt: (left, right, desc) => {
+        const leftDate = new Date(left.createdAt).getTime()
+        const rightDate = new Date(right.createdAt).getTime()
+
+        if (leftDate === rightDate) {
+          return 0
+        }
+
+        return desc ? rightDate - leftDate : leftDate - rightDate
+      },
+      company: (left, right, desc) =>
+        compareText(getCompanyName(left), getCompanyName(right), desc),
+    },
+  })
 
   return {
-    rows,
-    totalCount: filtered.length,
+    rows: rows.map(toTableRow),
+    totalCount,
   }
 }
 
 export async function fetchUserById(id: string): Promise<UserMutationInput & { id: string }> {
   const source = await loadUsersDataset()
-  await simulateLatency(180)
+  await delay(180)
 
   const target = source.find((user) => user.id === id)
   if (!target) {
@@ -451,7 +374,7 @@ export async function createUser(
   input: UserMutationInput
 ): Promise<UserMutationInput & { id: string }> {
   const source = await loadUsersDataset()
-  await simulateLatency(220)
+  await delay(220)
 
   const normalized = normalizeMutationInput(input)
   const nextUser: UserRecord = {
@@ -480,7 +403,7 @@ export async function updateUserById(
   input: UserMutationInput
 ): Promise<UserMutationInput & { id: string }> {
   const source = await loadUsersDataset()
-  await simulateLatency(220)
+  await delay(220)
 
   const index = findUserIndex(source, id)
   if (index < 0) {
@@ -508,7 +431,7 @@ export async function updateUserById(
 
 export async function deleteUserById(id: string): Promise<void> {
   const source = await loadUsersDataset()
-  await simulateLatency(220)
+  await delay(220)
 
   const index = findUserIndex(source, id)
   if (index < 0) {
@@ -534,22 +457,8 @@ export async function fetchFilterOptions(
   request: FilterOptionsRequest
 ): Promise<FilterOptionsResponse> {
   const source = await loadUsersDataset()
-  await simulateLatency(220)
+  await delay(220)
 
   const pool = getFilterPool(source, kind)
-  const filtered = pool.filter((value) =>
-    value.toLowerCase().includes(request.search.trim().toLowerCase())
-  )
-  const sorted = [...filtered].sort((a, b) => compareValues(a, b, false))
-
-  const start = request.page * request.pageSize
-  const page = sorted.slice(start, start + request.pageSize)
-
-  return {
-    options: page.map((value) => ({
-      label: value,
-      value,
-    })),
-    hasMore: start + request.pageSize < sorted.length,
-  }
+  return buildFilterOptions(pool, request)
 }

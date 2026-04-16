@@ -50,11 +50,16 @@ type TableToolbarProps<TFilters extends Record<string, unknown>> = {
   globalSearchInput: string
   onGlobalSearchChange: (value: string) => void
   searchPlaceholder?: string
+  filterFieldClassName?: string
+  dateRangeFieldClassName?: string
   filters: TFilters
   onFiltersChange: (updater: StateUpdater<TFilters>) => void
   onReset: () => void
   fields: TableToolbarField<TFilters>[]
 }
+
+const DEFAULT_FILTER_FIELD_CLASS_NAME = "h-9 min-w-[9rem] px-2"
+const DEFAULT_DATE_RANGE_FIELD_CLASS_NAME = "h-9 min-w-[12rem] justify-start px-3 text-left"
 
 function parseFilterDate(value: string) {
   if (!value) {
@@ -128,6 +133,8 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
   globalSearchInput,
   onGlobalSearchChange,
   searchPlaceholder = "Search...",
+  filterFieldClassName = DEFAULT_FILTER_FIELD_CLASS_NAME,
+  dateRangeFieldClassName = DEFAULT_DATE_RANGE_FIELD_CLASS_NAME,
   filters,
   onFiltersChange,
   onReset,
@@ -164,7 +171,7 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={field.className ?? "h-9 min-w-[12rem] justify-start px-3 text-left"}
+                    className={field.className ?? dateRangeFieldClassName}
                   >
                     <CalendarDaysIcon data-icon="inline-start" />
                     <span className="truncate">
@@ -201,7 +208,7 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
                 placeholder={field.placeholder}
                 selected={readStringArray(filters[field.name])}
                 selectedLabelMap={selectedLabelMap}
-                className={field.className ?? "h-9 min-w-[8.5rem] px-2"}
+                className={field.className ?? filterFieldClassName}
                 loadOptions={(request) => loadStaticOptions(field.options, request)}
                 onChange={(nextSelected) =>
                   onFiltersChange((previous) => ({
@@ -219,7 +226,7 @@ export function TableToolbar<TFilters extends Record<string, unknown>>({
               label={field.label}
               placeholder={field.placeholder}
               selected={readStringArray(filters[field.name])}
-              className={field.className ?? "h-9 min-w-[8.5rem] px-2"}
+              className={field.className ?? filterFieldClassName}
               loadOptions={field.loadOptions}
               onChange={(nextSelected) =>
                 onFiltersChange((previous) => ({
