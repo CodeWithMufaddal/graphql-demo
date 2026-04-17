@@ -1,6 +1,8 @@
 import { createElement, lazy } from "react"
 import type { RouteObject } from "react-router-dom"
 
+import type { RouteHandle } from "@/routes/route-metadata"
+
 const loadOverviewPage = () =>
   import("./pages/OverviewPage").then((module) => ({
     default: module.OverviewPage,
@@ -11,6 +13,12 @@ export const dashboardRoutes: RouteObject[] = [
   {
     path: "/overview",
     element: createElement(OverviewPage),
+    handle: {
+      metadata: {
+        title: "Overview | Atlas Admin",
+        description: "Command center and KPI snapshots for your GraphQL workspace.",
+      },
+    } satisfies RouteHandle,
   },
 ]
 

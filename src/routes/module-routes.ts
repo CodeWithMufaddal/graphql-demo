@@ -31,26 +31,14 @@ export const privateRoutes: RouteObject[] = [
   ...systemRoutes,
 ]
 
+const routePreloadRegistry = [
+  { matches: matchesAuthRoute, preload: preloadAuthRoutes },
+  { matches: matchesDashboardRoute, preload: preloadDashboardRoutes },
+  { matches: matchesUsersRoute, preload: preloadUsersRoutes },
+  { matches: matchesPostsRoute, preload: preloadPostsRoutes },
+]
+
 export function preloadCurrentRouteModules(pathname: string) {
-  if (matchesAuthRoute(pathname)) {
-    void preloadAuthRoutes()
-    return
-  }
-
-  if (matchesDashboardRoute(pathname)) {
-    void preloadDashboardRoutes()
-    return
-  }
-
-  if (matchesUsersRoute(pathname)) {
-    void preloadUsersRoutes()
-    return
-  }
-
-  if (matchesPostsRoute(pathname)) {
-    void preloadPostsRoutes()
-    return
-  }
-
-  void preloadSystemRoutes()
+  const target = routePreloadRegistry.find((entry) => entry.matches(pathname))
+  void (target?.preload() ?? preloadSystemRoutes())
 }

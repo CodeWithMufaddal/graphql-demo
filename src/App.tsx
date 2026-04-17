@@ -1,8 +1,14 @@
 import { Suspense, lazy, useEffect, useMemo } from "react"
-import { Navigate, useLocation, useRoutes } from "react-router-dom"
+import {
+  Navigate,
+  matchRoutes,
+  useLocation,
+  useRoutes,
+  type RouteObject,
+} from "react-router-dom"
 
-import { resolveNavItem } from "@/navigation/dashboard-nav"
 import { privateRoutes, preloadCurrentRouteModules, publicRoutes } from "@/routes/module-routes"
+import { defaultRouteMetadata, readRouteMetadata } from "@/routes/route-metadata"
 import { RequireAuth } from "@/routes/RequireAuth"
 
 const loadAdminLayoutModule = () => import("@/layouts/AdminLayout")
@@ -29,60 +35,30 @@ function RouteLoader() {
   )
 }
 
-type RouteMetadata = {
-  title: string
-  description: string
+function resolveRouteMetadata(routes: RouteObject[], pathname: string) {
+  const matches = matchRoutes(routes, pathname)
+
+  if (!matches?.length) {
+    return defaultRouteMetadata
+  }
+
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    const metadata = readRouteMetadata(matches[index].route)
+
+    if (metadata) {
+      return metadata
+    }
+  }
+
+  return defaultRouteMetadata
 }
 
-function resolveRouteMetadata(pathname: string): RouteMetadata {
-  if (pathname === "/login") {
-    return {
-      title: "Sign In | Atlas Admin",
-      description: "Sign in to access the Atlas Admin GraphQL workspace.",
-    }
-  }
-
-  if (pathname === "/users/new") {
-    return {
-      title: "Create User | Atlas Admin",
-      description: "Create a new user record with validated profile, company, and address details.",
-    }
-  }
-
-  if (/^\/users\/[^/]+\/edit$/.test(pathname)) {
-    return {
-      title: "Edit User | Atlas Admin",
-      description: "Update existing user profile data in Atlas Admin.",
-    }
-  }
-
-  if (pathname === "/") {
-    return {
-      title: "Overview | Atlas Admin",
-      description: "Command center and KPI snapshots for your GraphQL workspace.",
-    }
-  }
-
-  const navItem = resolveNavItem(pathname)
-  const isKnownRoute =
-    pathname === navItem.path || pathname.startsWith(`${navItem.path}/`)
-
-  if (isKnownRoute) {
-    return {
-      title: `${navItem.title} | Atlas Admin`,
-      description: navItem.description,
-    }
-  }
-
-  return {
-    title: "Page Not Found | Atlas Admin",
-    description: "The requested route does not exist in this admin workspace.",
-  }
-}
-
-function RouteMetadataManager() {
+function RouteMetadataManager({ routes }: { routes: RouteObject[] }) {
   const { pathname } = useLocation()
-  const metadata = useMemo(() => resolveRouteMetadata(pathname), [pathname])
+  const metadata = useMemo(
+    () => resolveRouteMetadata(routes, pathname),
+    [routes, pathname]
+  )
 
   useEffect(() => {
     document.title = metadata.title
@@ -104,7 +80,7 @@ function RouteMetadataManager() {
 }
 
 function App() {
-  const routeConfig = useMemo(
+  const routeConfig = useMemo<RouteObject[]>(
     () => [
       ...publicRoutes,
       {
@@ -114,7 +90,16 @@ function App() {
           </RequireAuth>
         ),
         children: [
-          { index: true, element: <Navigate to="/overview" replace /> },
+          {
+            index: true,
+            element: <Navigate to="/overview" replace />,
+            handle: {
+              metadata: {
+                title: "Overview | Atlas Admin",
+                description: "Command center and KPI snapshots for your GraphQL workspace.",
+              },
+            },
+          },
           ...privateRoutes,
         ],
       },
@@ -125,7 +110,7 @@ function App() {
 
   return (
     <>
-      <RouteMetadataManager />
+      <RouteMetadataManager routes={routeConfig} />
       <Suspense fallback={<RouteLoader />}>
         {routeElements}
       </Suspense>
