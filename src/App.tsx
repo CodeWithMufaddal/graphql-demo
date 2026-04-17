@@ -1,69 +1,21 @@
 import { Suspense, lazy, useEffect, useMemo } from "react"
-import { Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { Navigate, useLocation, useRoutes } from "react-router-dom"
 
 import { resolveNavItem } from "@/navigation/dashboard-nav"
+import { privateRoutes, preloadCurrentRouteModules, publicRoutes } from "@/routes/module-routes"
 import { RequireAuth } from "@/routes/RequireAuth"
 
 const loadAdminLayoutModule = () => import("@/layouts/AdminLayout")
-const loadAuthModule = () => import("@/modules/auth")
-const loadSystemModule = () => import("@/modules/system")
-const loadDashboardModule = () => import("@/modules/dashboard")
-const loadUsersModule = () => import("@/modules/users")
-const loadPostsModule = () => import("@/modules/posts")
 
 const AdminLayout = lazy(() =>
   loadAdminLayoutModule().then((module) => ({ default: module.AdminLayout }))
 )
-const LoginPage = lazy(() =>
-  loadAuthModule().then((module) => ({ default: module.LoginPage }))
-)
-const NotFoundPage = lazy(() =>
-  loadSystemModule().then((module) => ({
-    default: module.NotFoundPage,
-  }))
-)
-const OverviewPage = lazy(() =>
-  loadDashboardModule().then((module) => ({
-    default: module.OverviewPage,
-  }))
-)
-const UsersPage = lazy(() =>
-  loadUsersModule().then((module) => ({ default: module.UsersPage }))
-)
-const UserEditorPage = lazy(() =>
-  loadUsersModule().then((module) => ({ default: module.UserEditorPage }))
-)
-const PostsPage = lazy(() =>
-  loadPostsModule().then((module) => ({ default: module.PostsPage }))
-)
-
-function preloadCurrentRouteModules(pathname: string) {
-  if (pathname === "/login") {
-    void loadAuthModule()
-    return
-  }
-
-  void loadAdminLayoutModule()
-
-  if (pathname === "/" || pathname === "/overview") {
-    void loadDashboardModule()
-    return
-  }
-
-  if (pathname.startsWith("/users")) {
-    void loadUsersModule()
-    return
-  }
-
-  if (pathname.startsWith("/posts")) {
-    void loadPostsModule()
-    return
-  }
-
-  void loadSystemModule()
-}
 
 if (typeof window !== "undefined") {
+  if (window.location.pathname !== "/login") {
+    void loadAdminLayoutModule()
+  }
+
   preloadCurrentRouteModules(window.location.pathname)
 }
 
@@ -152,28 +104,30 @@ function RouteMetadataManager() {
 }
 
 function App() {
+  const routeConfig = useMemo(
+    () => [
+      ...publicRoutes,
+      {
+        element: (
+          <RequireAuth>
+            <AdminLayout />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <Navigate to="/overview" replace /> },
+          ...privateRoutes,
+        ],
+      },
+    ],
+    []
+  )
+  const routeElements = useRoutes(routeConfig)
+
   return (
     <>
       <RouteMetadataManager />
       <Suspense fallback={<RouteLoader />}>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            element={
-              <RequireAuth>
-                <AdminLayout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<Navigate to="/overview" replace />} />
-            <Route path="/overview" element={<OverviewPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/users/new" element={<UserEditorPage />} />
-            <Route path="/users/:id/edit" element={<UserEditorPage />} />
-            <Route path="/posts" element={<PostsPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
+        {routeElements}
       </Suspense>
     </>
   )
