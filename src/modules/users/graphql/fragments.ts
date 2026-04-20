@@ -8,20 +8,6 @@ export const USER_DIRECTORY_FIELDS_FRAGMENT = gql`
     email
     phone
     website
-    company {
-      name
-      catchPhrase
-      bs
-    }
-    address {
-      city
-      street
-      suite
-      zipcode
-      geo {
-        lat
-        lng
-      }
-    }
+   
   }
 `

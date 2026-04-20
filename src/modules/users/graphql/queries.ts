@@ -13,21 +13,21 @@ export type UserDirectoryRow = {
   email: string
   phone: Nullable<string>
   website: Nullable<string>
-  company: Nullable<{
-    name: string
-    catchPhrase: Nullable<string>
-    bs: Nullable<string>
-  }>
-  address: Nullable<{
-    city: Nullable<string>
-    street: Nullable<string>
-    suite: Nullable<string>
-    zipcode: Nullable<string>
-    geo: Nullable<{
-      lat: Nullable<string>
-      lng: Nullable<string>
-    }>
-  }>
+  // company: Nullable<{
+  //   name: string
+  //   catchPhrase: Nullable<string>
+  //   bs: Nullable<string>
+  // }>
+  // address: Nullable<{
+  //   city: Nullable<string>
+  //   street: Nullable<string>
+  //   suite: Nullable<string>
+  //   zipcode: Nullable<string>
+  //   geo: Nullable<{
+  //     lat: Nullable<string>
+  //     lng: Nullable<string>
+  //   }>
+  // }>
 }
 
 type UserMutationData<FieldName extends string> = {
@@ -109,8 +109,8 @@ export type UserInput = {
   phone?: string
   name: string
   email: string
-  company?: UserCompanyInput
-  address?: UserAddressInput
+  // company?: UserCompanyInput
+  // address?: UserAddressInput
 }
 
 export type CreateUserMutationData = UserMutationData<"createUser">
