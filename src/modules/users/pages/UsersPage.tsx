@@ -2,16 +2,17 @@ import { useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { toast } from "sonner";
 
 import { ServerDataTable } from "@/components/data-table/server-data-table";
 import { TableToolbar } from "@/components/data-table/table-toolbar";
 import { Button } from "@/components/ui/button";
 import { showDialog } from "@/components/ui/global-confirmation-dialog";
+import { useApolloMutation } from "@/hooks/use-apollo-mutation";
 import { useDataTable } from "@/hooks/use-data-table";
 import {
   deleteUserById,
   fetchUsersTable,
+  usersCacheKey,
   type UsersServerFilters,
   type UsersTableRow,
 } from "@/modules/users/endpoints";
@@ -20,6 +21,18 @@ const defaultFilters: UsersServerFilters = {};
 
 export function UsersPage() {
   const navigate = useNavigate();
+  const { mutateAsync: deleteUser } = useApolloMutation({
+    mutationFn: async ({ id }: { id: string; name: string }) => {
+      await deleteUserById(id);
+    },
+    invalidateKeys: [usersCacheKey],
+    toastMessages: {
+      loading: "Deleting user...",
+      success: (_result, variables) => `Deleted ${variables.name}.`,
+      error: (error) =>
+        error instanceof Error ? error.message : "Unable to delete user.",
+    },
+  });
 
   const {
     afterDelete,
@@ -48,18 +61,14 @@ export function UsersPage() {
       if (!confirmed) return false;
 
       try {
-        await deleteUserById(target.id);
-        toast.success(`Deleted ${target.name}.`);
+        await deleteUser({ id: target.id, name: target.name });
         afterDelete(target.id);
         return true;
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unable to delete user.";
-        toast.error(message);
+      } catch {
         return false;
       }
     },
-    [afterDelete],
+    [afterDelete, deleteUser],
   );
 
   const columns = useMemo<ColumnDef<UsersTableRow>[]>(

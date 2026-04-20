@@ -4,35 +4,41 @@ import type { PageQueryOptionsInput } from "@/lib/graphql/types"
 
 import { USER_DIRECTORY_FIELDS_FRAGMENT } from "./fragments"
 
+type Nullable<T> = T | null
+
 export type UserDirectoryRow = {
   id: string
   name: string
   username: string
   email: string
-  phone: string | null
-  website: string | null
-  company: {
+  phone: Nullable<string>
+  website: Nullable<string>
+  company: Nullable<{
     name: string
-    catchPhrase: string | null
-    bs: string | null
-  } | null
-  address: {
-    city: string | null
-    street: string | null
-    suite: string | null
-    zipcode: string | null
-    geo: {
-      lat: string | null
-      lng: string | null
-    } | null
-  } | null
+    catchPhrase: Nullable<string>
+    bs: Nullable<string>
+  }>
+  address: Nullable<{
+    city: Nullable<string>
+    street: Nullable<string>
+    suite: Nullable<string>
+    zipcode: Nullable<string>
+    geo: Nullable<{
+      lat: Nullable<string>
+      lng: Nullable<string>
+    }>
+  }>
+}
+
+type UserMutationData<FieldName extends string> = {
+  [K in FieldName]: Nullable<UserDirectoryRow>
 }
 
 export type GetUsersQueryData = {
   users: {
-    meta: {
+    meta: Nullable<{
       totalCount: number
-    } | null
+    }>
     data: UserDirectoryRow[]
   }
 }
@@ -59,7 +65,7 @@ export const GET_USERS_QUERY: TypedDocumentNode<
 `
 
 export type GetUserByIdQueryData = {
-  user: UserDirectoryRow | null
+  user: Nullable<UserDirectoryRow>
 }
 
 export type GetUserByIdQueryVariables = {
@@ -107,9 +113,7 @@ export type UserInput = {
   address?: UserAddressInput
 }
 
-export type CreateUserMutationData = {
-  createUser: UserDirectoryRow | null
-}
+export type CreateUserMutationData = UserMutationData<"createUser">
 
 export type CreateUserMutationVariables = {
   input: UserInput
@@ -127,9 +131,7 @@ export const CREATE_USER_MUTATION: TypedDocumentNode<
   ${USER_DIRECTORY_FIELDS_FRAGMENT}
 `
 
-export type UpdateUserByIdMutationData = {
-  updateUser: UserDirectoryRow | null
-}
+export type UpdateUserByIdMutationData = UserMutationData<"updateUser">
 
 export type UpdateUserByIdMutationVariables = {
   id: string
@@ -149,7 +151,7 @@ export const UPDATE_USER_BY_ID_MUTATION: TypedDocumentNode<
 `
 
 export type DeleteUserByIdMutationData = {
-  deleteUser: boolean | null
+  deleteUser: Nullable<boolean>
 }
 
 export type DeleteUserByIdMutationVariables = {

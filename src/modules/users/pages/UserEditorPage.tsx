@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { ArrowLeftIcon } from "lucide-react"
-import { toast } from "sonner"
 
 import { UserForm, type UserFormSubmitValues, type UserFormValues } from "@/modules/users/forms"
 import {
   createUser,
   fetchUserById,
+  usersCacheKey,
   updateUserById,
 } from "@/modules/users/endpoints"
+import { useApolloMutation } from "@/hooks/use-apollo-mutation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -20,6 +21,23 @@ export function UserEditorPage() {
   const [isLoading, setIsLoading] = useState(isEditMode)
   const [error, setError] = useState<string | null>(null)
   const [initialValues, setInitialValues] = useState<Partial<UserFormValues> | undefined>(undefined)
+  const saveUserMutation = useApolloMutation({
+    mutationFn: async ({
+      id: targetId,
+      values,
+    }: {
+      id?: string
+      values: UserFormSubmitValues
+    }) => (targetId ? updateUserById(targetId, values) : createUser(values)),
+    invalidateKeys: [usersCacheKey],
+    toastMessages: {
+      loading: ({ id: targetId }) => (targetId ? "Updating user..." : "Creating user..."),
+      success: (_result, { id: targetId }) =>
+        targetId ? "User updated successfully." : "User created successfully.",
+      error: (submitError) =>
+        submitError instanceof Error ? submitError.message : "Unable to save user.",
+    },
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -93,19 +111,10 @@ export function UserEditorPage() {
 
   async function handleSubmit(values: UserFormSubmitValues) {
     try {
-      if (id) {
-        await updateUserById(id, values)
-        toast.success("User updated successfully.")
-      } else {
-        await createUser(values)
-        toast.success("User created successfully.")
-      }
-
+      await saveUserMutation.mutateAsync({ id, values })
       navigate("/users")
-    } catch (submitError) {
-      const message =
-        submitError instanceof Error ? submitError.message : "Unable to save user."
-      toast.error(message)
+    } catch {
+      return
     }
   }
 

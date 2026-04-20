@@ -1,17 +1,21 @@
 import type { DataTableQuery, DataTableResult } from "@/hooks/use-data-table"
 import { apolloClient } from "@/lib/apollo/client"
-import type { PageQueryOptionsInput } from "@/lib/graphql/types"
+import { apolloCacheKeys } from "@/lib/apollo/cache-invalidation"
+import { createApolloTableFetcher } from "@/lib/apollo/table-query"
 import {
   CREATE_USER_MUTATION,
   DELETE_USER_BY_ID_MUTATION,
   GET_USER_BY_ID_QUERY,
   GET_USERS_QUERY,
   UPDATE_USER_BY_ID_MUTATION,
+  type GetUsersQueryData,
+  type GetUsersQueryVariables,
   type UserDirectoryRow,
   type UserInput,
 } from "@/modules/users/graphql"
 
 export type UserMutationInput = UserInput
+export type UserRecord = UserMutationInput & { id: string }
 
 export type UsersTableRow = {
   id: string
@@ -24,76 +28,24 @@ export type UsersTableRow = {
 }
 
 export type UsersServerFilters = Record<string, never>
-
 export type UsersServerQuery = DataTableQuery<UsersServerFilters>
-
 export type UsersServerResult = DataTableResult<UsersTableRow>
+export const usersCacheKey = apolloCacheKeys.users
 
-function normalizeOptionalString(value: string | undefined) {
-  if (!value) {
-    return undefined
-  }
+const EMPTY_VALUE_LABEL = "N/A"
 
-  const next = value.trim()
-  return next.length > 0 ? next : undefined
-}
+const SORT_FIELD_BY_COLUMN = {
+  company: "company.name",
+  name: "name",
+  username: "username",
+  email: "email",
+  phone: "phone",
+  website: "website",
+  id: "id",
+} as const
 
-function normalizeMutationInput(input: UserMutationInput): UserMutationInput {
-  const company = input.company
-    ? {
-        name: normalizeOptionalString(input.company.name),
-        catchPhrase: normalizeOptionalString(input.company.catchPhrase),
-        bs: normalizeOptionalString(input.company.bs),
-      }
-    : undefined
-  const address = input.address
-    ? {
-        zipcode: normalizeOptionalString(input.address.zipcode),
-        suite: normalizeOptionalString(input.address.suite),
-        street: normalizeOptionalString(input.address.street),
-        city: normalizeOptionalString(input.address.city),
-        geo:
-          input.address.geo?.lat !== undefined || input.address.geo?.lng !== undefined
-            ? {
-                lat: input.address.geo?.lat,
-                lng: input.address.geo?.lng,
-              }
-            : undefined,
-      }
-    : undefined
-
-  const hasCompanyValues = Boolean(company?.name || company?.catchPhrase || company?.bs)
-  const hasAddressValues = Boolean(
-    address?.zipcode ||
-      address?.suite ||
-      address?.street ||
-      address?.city ||
-      address?.geo?.lat !== undefined ||
-      address?.geo?.lng !== undefined
-  )
-
-  return {
-    name: input.name.trim(),
-    username: input.username.trim(),
-    email: input.email.trim(),
-    website: normalizeOptionalString(input.website),
-    phone: normalizeOptionalString(input.phone),
-    company: hasCompanyValues ? company : undefined,
-    address: hasAddressValues ? address : undefined,
-  }
-}
-
-function parseOptionalFloat(value: string | null | undefined) {
-  if (!value) {
-    return undefined
-  }
-
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function getCompanyName(row: Pick<UserDirectoryRow, "company">) {
-  return row.company?.name?.trim() || "N/A"
+function displayString(value: string | null | undefined) {
+  return value?.trim() || EMPTY_VALUE_LABEL
 }
 
 function toTableRow(user: UserDirectoryRow): UsersTableRow {
@@ -102,13 +54,13 @@ function toTableRow(user: UserDirectoryRow): UsersTableRow {
     name: user.name,
     username: user.username,
     email: user.email,
-    phone: user.phone?.trim() || "N/A",
-    website: user.website?.trim() || "N/A",
-    company: getCompanyName(user),
+    phone: displayString(user.phone),
+    website: displayString(user.website),
+    company: displayString(user.company?.name),
   }
 }
 
-function toMutationResult(user: UserDirectoryRow): UserMutationInput & { id: string } {
+function toUserRecord(user: UserDirectoryRow): UserRecord {
   return {
     id: user.id,
     name: user.name,
@@ -131,8 +83,8 @@ function toMutationResult(user: UserDirectoryRow): UserMutationInput & { id: str
           city: user.address.city ?? undefined,
           geo: user.address.geo
             ? {
-                lat: parseOptionalFloat(user.address.geo.lat),
-                lng: parseOptionalFloat(user.address.geo.lng),
+                lat: user.address.geo.lat == null ? undefined : Number(user.address.geo.lat),
+                lng: user.address.geo.lng == null ? undefined : Number(user.address.geo.lng),
               }
             : undefined,
         }
@@ -140,171 +92,50 @@ function toMutationResult(user: UserDirectoryRow): UserMutationInput & { id: str
   }
 }
 
-function toSortField(columnId: string) {
-  switch (columnId) {
-    case "company":
-      return "company.name"
-    case "name":
-    case "username":
-    case "email":
-    case "phone":
-    case "website":
-    case "id":
-      return columnId
-    default:
-      return undefined
-  }
-}
+export const fetchUsersTable = createApolloTableFetcher<
+  GetUsersQueryData,
+  GetUsersQueryVariables,
+  UserDirectoryRow,
+  UsersTableRow,
+  UsersServerFilters
+>({
+  query: GET_USERS_QUERY,
+  selectPage: (data) => data?.users,
+  mapRow: toTableRow,
+  sortFieldByColumn: SORT_FIELD_BY_COLUMN,
+})
 
-function buildUsersOptions(
-  query: UsersServerQuery,
-  limit: number
-): PageQueryOptionsInput {
-  const searchQuery = query.globalSearch.trim()
-  const firstSort = query.sorting[0]
-  const sortField = firstSort ? toSortField(firstSort.id) : undefined
-
-  return {
-    paginate: {
-      page: query.pageIndex + 1,
-      limit,
-    },
-    search: searchQuery ? { q: searchQuery } : undefined,
-    sort:
-      firstSort && sortField
-        ? {
-            field: sortField,
-            order: firstSort.desc ? "DESC" : "ASC",
-          }
-        : undefined,
-  }
-}
-
-async function queryUsers(options: PageQueryOptionsInput) {
-  const response = await apolloClient.query({
-    query: GET_USERS_QUERY,
-    variables: { options },
-    fetchPolicy: "cache-first",
-  })
-
-  if (response.error) {
-    throw new Error(response.error.message)
-  }
-
-  return response.data?.users
-}
-
-function invalidateUsersCache() {
-  apolloClient.cache.evict({
-    id: "ROOT_QUERY",
-    fieldName: "users",
-  })
-  apolloClient.cache.evict({
-    id: "ROOT_QUERY",
-    fieldName: "user",
-  })
-  apolloClient.cache.gc()
-}
-
-export async function fetchUsersTable(query: UsersServerQuery): Promise<UsersServerResult> {
-  const usersPage = await queryUsers(buildUsersOptions(query, query.pageSize))
-  const users = usersPage?.data ?? []
-  const rows = users.map(toTableRow)
-
-  const totalCount =
-    usersPage?.meta?.totalCount ??
-    query.pageIndex * query.pageSize + rows.length + (rows.length === query.pageSize ? 1 : 0)
-
-  return {
-    rows,
-    totalCount,
-  }
-}
-
-export async function fetchUserById(id: string): Promise<UserMutationInput & { id: string }> {
+export async function fetchUserById(id: string): Promise<UserRecord> {
   const response = await apolloClient.query({
     query: GET_USER_BY_ID_QUERY,
     variables: { id },
     fetchPolicy: "cache-first",
   })
 
-  if (response.error) {
-    throw new Error(response.error.message)
-  }
-
-  const user = response.data?.user
-  if (!user) {
-    throw new Error("User not found.")
-  }
-
-  return toMutationResult(user)
+  return toUserRecord(response.data?.user as UserDirectoryRow)
 }
 
-export async function createUser(
-  input: UserMutationInput
-): Promise<UserMutationInput & { id: string }> {
-  const normalized = normalizeMutationInput(input)
-
+export async function createUser(input: UserMutationInput): Promise<UserRecord> {
   const response = await apolloClient.mutate({
     mutation: CREATE_USER_MUTATION,
-    variables: {
-      input: normalized,
-    },
+    variables: { input },
   })
 
-  if (response.error) {
-    throw new Error(response.error.message)
-  }
-
-  const createdUser = response.data?.createUser
-  if (!createdUser) {
-    throw new Error("Unable to create user.")
-  }
-
-  invalidateUsersCache()
-  return toMutationResult(createdUser)
+  return toUserRecord(response.data?.createUser as UserDirectoryRow)
 }
 
-export async function updateUserById(
-  id: string,
-  input: UserMutationInput
-): Promise<UserMutationInput & { id: string }> {
-  const normalized = normalizeMutationInput(input)
-
+export async function updateUserById(id: string, input: UserMutationInput): Promise<UserRecord> {
   const response = await apolloClient.mutate({
     mutation: UPDATE_USER_BY_ID_MUTATION,
-    variables: {
-      id,
-      input: normalized,
-    },
+    variables: { id, input },
   })
 
-  if (response.error) {
-    throw new Error(response.error.message)
-  }
-
-  const updatedUser = response.data?.updateUser
-  if (!updatedUser) {
-    throw new Error("Unable to update user.")
-  }
-
-  invalidateUsersCache()
-  return toMutationResult(updatedUser)
+  return toUserRecord(response.data?.updateUser as UserDirectoryRow)
 }
 
 export async function deleteUserById(id: string): Promise<void> {
-  const response = await apolloClient.mutate({
+  await apolloClient.mutate({
     mutation: DELETE_USER_BY_ID_MUTATION,
     variables: { id },
   })
-
-  if (response.error) {
-    throw new Error(response.error.message)
-  }
-
-  if (response.data?.deleteUser === false) {
-    throw new Error("Unable to delete user.")
-  }
-
-  invalidateUsersCache()
 }
